@@ -17,3 +17,7 @@
 # Ignore Temp or scratch files
 temp.go
 scratch.go
+
+#ignore environment variables 
+.env
+*.env
