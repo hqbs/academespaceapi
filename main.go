@@ -6,7 +6,7 @@ type User struct {
 	Email       string        `json:"email"`
 	PhoneNumber string        `json:"phonenumber"`
 	Type        string        `json:"type"`
-	ID          int64         `json:"id"`
+	ID          string        `json:"id"`
 	Username    string        `json:"username"`
 	Password    string        `json:"password"`
 	DiscordID   string        `json:"discordid,omitempty"`
