@@ -19,7 +19,6 @@ type UserValidator struct {
 	PhoneNumber string `validate:"min=4,max=40,regexp=^(\(?\+?[0-9]*\)?)?[0-9_\- \(\)]*$"` // http://regexlib.com/REDetails.aspx?regexp_id=73
 	Type        string `validate:"nonzero"`
 	ID          string `validate:"nonzero"`
-	Username    string `validate:"min=4,max=40"`
 	Password    string `validate:"min=14,max=350"`
 }
 
@@ -32,7 +31,6 @@ func ValidateInfo(params graphql.ResolveParams) ValidatedUser {
 		PhoneNumber: params.Args["phonenumber"].(string),
 		Type:        params.Args["type"].(string),
 		ID:          string(idHash),
-		Username:    params.Args["username"].(string),
 		Password:    params.Args["password"].(string),
 	}
 
@@ -69,7 +67,6 @@ func ValidateInfo(params graphql.ResolveParams) ValidatedUser {
 			PhoneNumber: params.Args["phonenumber"].(string),
 			Type:        params.Args["type"].(string),
 			ID:          string(idHash),
-			Username:    params.Args["username"].(string),
 			Password:    string(passHash),
 		},
 
