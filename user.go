@@ -4,17 +4,14 @@ import (
 	"fmt"
 	"sort"
 
+	"log"
+
+	"github.com/couchbase/gocb"
+	"github.com/graphql-go/graphql"
 	"golang.org/x/crypto/bcrypt"
 	validator "gopkg.in/validator.v2"
-	"github.com/joho/godotenv"
-	"github.com/couchbase/gocb "
 )
-var (
-	dbUser := os.Getenv("COUCH_USER")
-	dbPass := os.Getenv("COUCH_PASS")
-	dbAddr := os.Getenv("COUCH_ADDR")
-	ddBucket := os.Getenv("COUCH_U_BUCKET")
-)
+
 type UserValidator struct {
 	FName       string `validate:"nonzero,min=2,max=100"`
 	LName       string `validate:"nonzero,min=2,max=100"`
@@ -26,31 +23,29 @@ type UserValidator struct {
 	Password    string `validate:"min=14,max=350"`
 }
 
-func ValidateInfo() ValidatedUser {
-
+func ValidateInfo(params graphql.ResolveParams) ValidatedUser {
+	idHash, err := bcrypt.GenerateFromPassword([]byte(params.Args["email"].(string)), 10)
 	validateUser := UserValidator{
 		FName:       params.Args["fname"].(string),
 		LName:       params.Args["lname"].(string),
 		Email:       params.Args["email"].(string),
 		PhoneNumber: params.Args["phonenumber"].(string),
 		Type:        params.Args["type"].(string),
-		ID:          hashID,
+		ID:          string(idHash),
 		Username:    params.Args["username"].(string),
 		Password:    params.Args["password"].(string),
 	}
 
-	idHash, err := bcrypt.GenerateFromPassword([]byte(params.Args["email"].(string)), 10)
-
 	if err != nil {
-		//TODO: Handle 
+		//TODO: Handle
 	}
 	validateUser.ID = string(idHash)
-	println(string(idHash))
+
 	err = validator.Validate(validateUser)
 	var errOuts []string
 	var userValid bool
 	if err == nil {
-		println("Values are valid!")
+		//println("Values are valid!")
 		userValid = true
 	} else {
 		errs := err.(validator.ErrorMap)
@@ -62,21 +57,24 @@ func ValidateInfo() ValidatedUser {
 		sort.Strings(errOuts)
 		userValid = false
 	}
-	passHash, err := bcrypt.GenerateFromPassword([]byte(params.Args["password"].(string),12))
+	passHash, err := bcrypt.GenerateFromPassword([]byte(params.Args["password"].(string)), 12)
 	if err != nil {
 		//TODO: handle
 	}
 	returnUser := ValidatedUser{
-		FName:       params.Args["fname"].(string),
-		LName:       params.Args["lname"].(string),
-		Email:       params.Args["email"].(string),
-		PhoneNumber: params.Args["phonenumber"].(string),
-		Type:        params.Args["type"].(string),
-		ID:          hashID,
-		Username:    params.Args["username"].(string),
-		Password:    passHash,
-		UserValid:   userValid,
-		Errors:      errOuts,
+		ValidUser: User{
+			FName:       params.Args["fname"].(string),
+			LName:       params.Args["lname"].(string),
+			Email:       params.Args["email"].(string),
+			PhoneNumber: params.Args["phonenumber"].(string),
+			Type:        params.Args["type"].(string),
+			ID:          string(idHash),
+			Username:    params.Args["username"].(string),
+			Password:    string(passHash),
+		},
+
+		UserValid: userValid,
+		Errors:    errOuts,
 	}
 
 	return returnUser
@@ -87,22 +85,34 @@ func validatePassword(password string) bool {
 	return false
 }
 
-func NewUser(userInfo User) bool {
-	// Connect to DB
-	connOpts := gocb.ClusterOptions{
-		Authenticator: gocb.PasswordAuthenticator{
-			dbUser,
-			dbPass,
-		},
+func NewUser(userInfo ValidatedUser, collection *gocb.Collection) bool {
+	if userInfo.UserValid {
+
+		checkUser, err := collection.Get(userInfo.ValidUser.Email, nil)
+		if err != nil {
+			// TODO: API json panic
+			log.Fatal(err)
+		}
+		if checkUser != nil {
+			// TODO: API JSON return of why didnt work
+		} else {
+			_, err = collection.Upsert(userInfo.ValidUser.Email, userInfo.ValidUser, &gocb.UpsertOptions{})
+			if err != nil {
+				//TODO: Handle
+				log.Fatal(err)
+			}
+
+			if err != nil {
+				//TODO: handle
+				log.Fatal(err)
+			}
+
+		}
+
+	} else {
+		return false
 	}
-	cluster, err := gocb.Connect(dbAddr, connOpts)
-	if err != nil {
-		//TODO: Handle error - will need to be sent through API
-		//TODO: Most likely a struct with a payload setup of some sort
-		log.Fatal(err)
-	}
-	bucket := cluster.Bucket(dbBucket)
-	collection := bucket.DefaultCollection()
+
 	return false
 }
 
