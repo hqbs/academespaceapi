@@ -12,6 +12,11 @@ import (
 	validator "gopkg.in/validator.v2"
 )
 
+/*
+	TODO: Update user validation to deal with new fields in the User Struct in main
+	TODO: Determine what is needed for new user creation with the new fields
+	TODO: Hold it all together and keep moving forward!!
+*/
 type UserValidator struct {
 	FName       string `validate:"nonzero,min=2,max=100"`
 	LName       string `validate:"nonzero,min=2,max=100"`
