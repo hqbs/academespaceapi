@@ -1,5 +1,14 @@
 package main
 
+import (
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/couchbase/gocb"
+	"github.com/joho/godotenv"
+)
+
 type User struct {
 	FName       string        `json:"fname"`
 	LName       string        `json:"lname"`
@@ -35,5 +44,34 @@ type DCordServer struct {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("error loading env file")
+		log.Fatal(err)
+	}
+	var (
+		dbUser   = os.Getenv("COUCH_USER")
+		dbPass   = os.Getenv("COUCH_PASS")
+		dbAddr   = os.Getenv("COUCH_ADDR")
+		dbBucket = os.Getenv("COUCH_U_BUCKET")
+	)
+
+	// Connect to DB
+	opts := gocb.ClusterOptions{
+		Authenticator: gocb.PasswordAuthenticator{
+			string(dbUser),
+			string(dbPass),
+		},
+	}
+
+	cluster, err := gocb.Connect(string(dbAddr), opts)
+	if err != nil {
+		//TODO: Handle error - will need to be sent through API
+		//TODO: Most likely a struct with a payload setup of some sort
+		log.Fatal(err)
+	}
+	bucket := cluster.Bucket(dbBucket)
+	collection := bucket.DefaultCollection()
 	//TODO: implement
+
 }
