@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/couchbase/gocb"
+	"github.com/graphql-go/graphql"
 	"github.com/joho/godotenv"
 )
 
@@ -43,6 +44,13 @@ type DCordServer struct {
 	DisplayName string `json:"displayname"`
 }
 
+type MutationPayload struct {
+	Success bool     `json:"success"`
+	Errors  []string `json:"errors"`
+	Token   string   `json:"token,omitempty"`
+
+}
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -74,4 +82,17 @@ func main() {
 	collection := bucket.DefaultCollection()
 	//TODO: implement
 
+
+	// GraphQL
+	mutPayloadType := graphql.NewObject(graphql.ObjectConfig{
+		Name: "mutpayload",
+		Fields: graphql.Fields{
+			"Success": &graphql.Field{
+				Type: graphql.Boolean,
+			},
+			"Errors": &graphql.Field{
+				Type: graphql.String[]
+			},
+		}
+	})
 }
