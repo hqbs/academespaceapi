@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sort"
 
-	"log"
-
 	"github.com/couchbase/gocb"
 	"github.com/graphql-go/graphql"
 	"golang.org/x/crypto/bcrypt"
@@ -93,7 +91,7 @@ func NewUser(userInfo ValidatedUser, collection *gocb.Collection) bool {
 		checkUser, err := collection.Get(userInfo.ValidUser.Email, nil)
 		if err != nil {
 			// TODO: API json panic
-			log.Fatal(err)
+			//log.Fatal(err)
 		}
 		if checkUser != nil {
 			// TODO: API JSON return of why didnt work
@@ -101,12 +99,12 @@ func NewUser(userInfo ValidatedUser, collection *gocb.Collection) bool {
 			_, err = collection.Upsert(userInfo.ValidUser.Email, userInfo.ValidUser, &gocb.UpsertOptions{})
 			if err != nil {
 				//TODO: Handle
-				log.Fatal(err)
+				//log.Fatal(err)
 			}
 
 			if err != nil {
 				//TODO: handle
-				log.Fatal(err)
+				//log.Fatal(err)
 			}
 
 		}
@@ -126,4 +124,16 @@ func UpdateUser(userInfo User, userInfoUpdated User) bool {
 func RemoveUser(userInfo User) bool {
 	//TODO: Implement
 	return false
+}
+
+func UserExist(email string, collection *gocb.Collection) bool {
+	checkUser, err := collection.Get(email, nil)
+	if err != nil {
+		return false
+	}
+	if checkUser != nil {
+		return true
+	}
+	return false
+
 }
