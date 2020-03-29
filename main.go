@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/couchbase/gocb"
-	"github.com/friendsofgo/graphiql"
 	"github.com/graphql-go/graphql"
 	"github.com/joho/godotenv"
 )
@@ -21,8 +20,6 @@ type UserToken struct {
 type UserPassReset struct {
 	URLToken   string `json:"urltoken"`
 	ExpireDate int    `json:"expiredate"`
-	UserEmail  string `json:"useremail"`
-	UserToken  string `json:"usertoken"`
 }
 
 type StudentClass struct {
@@ -81,7 +78,7 @@ func main() {
 	err := godotenv.Load()
 	if err != nil {
 		fmt.Println("error loading env file")
-		log.Fatal(err)
+		//log.Fatal(err)
 	}
 	var (
 		dbUser   = os.Getenv("COUCH_USER")
@@ -102,7 +99,7 @@ func main() {
 	if err != nil {
 		//TODO: Handle error - will need to be sent through API
 		//TODO: Most likely a struct with a payload setup of some sort
-		log.Fatal(err)
+		//log.Fatal(err)
 	}
 	bucket := cluster.Bucket(dbBucket)
 	collection := bucket.DefaultCollection()
@@ -124,32 +121,32 @@ func main() {
 	// 	},
 	// })
 
-	StudentClassType := graphql.NewObject(graphql.ObjectConfig{
-		Name: "studentclass",
-		Fields: graphql.Fields{
-			"ClassName": &graphql.Field{
-				Type: graphql.String,
-			},
-			"CourseNumber": &graphql.Field{
-				Type: graphql.Int,
-			},
-			"CourseSection": &graphql.Field{
-				Type: graphql.Int,
-			},
-			"Professor": &graphql.Field{
-				Type: graphql.String,
-			},
-			"ProfEmail": &graphql.Field{
-				Type: graphql.String,
-			},
-			"University": &graphql.Field{
-				Type: graphql.String,
-			},
-			"UniversityID": &graphql.Field{
-				Type: graphql.String,
-			},
-		},
-	})
+	// StudentClassType := graphql.NewObject(graphql.ObjectConfig{
+	// 	Name: "studentclass",
+	// 	Fields: graphql.Fields{
+	// 		"ClassName": &graphql.Field{
+	// 			Type: graphql.String,
+	// 		},
+	// 		"CourseNumber": &graphql.Field{
+	// 			Type: graphql.Int,
+	// 		},
+	// 		"CourseSection": &graphql.Field{
+	// 			Type: graphql.Int,
+	// 		},
+	// 		"Professor": &graphql.Field{
+	// 			Type: graphql.String,
+	// 		},
+	// 		"ProfEmail": &graphql.Field{
+	// 			Type: graphql.String,
+	// 		},
+	// 		"University": &graphql.Field{
+	// 			Type: graphql.String,
+	// 		},
+	// 		"UniversityID": &graphql.Field{
+	// 			Type: graphql.String,
+	// 		},
+	// 	},
+	// })
 
 	UserTokenType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "usertoken",
@@ -163,127 +160,134 @@ func main() {
 		},
 	})
 
-	UserPassResetType := graphql.NewObject(graphql.ObjectConfig{
-		Name: "userpassreset",
-		Fields: graphql.Fields{
-			"URLToken": &graphql.Field{
-				Type: graphql.String,
-			},
-			"ExpireDate": &graphql.Field{
-				Type: graphql.Int,
-			},
-		},
-	})
+	// UserPassResetType := graphql.NewObject(graphql.ObjectConfig{
+	// 	Name: "userpassreset",
+	// 	Fields: graphql.Fields{
+	// 		"URLToken": &graphql.Field{
+	// 			Type: graphql.String,
+	// 		},
+	// 		"ExpireDate": &graphql.Field{
+	// 			Type: graphql.Int,
+	// 		},
+	// 	},
+	// })
 
-	UserType := graphql.NewObject(graphql.ObjectConfig{
-		Name: "user",
-		Fields: graphql.Fields{
-			"FName": &graphql.Field{
-				Type: graphql.String,
-			},
-			"LName": &graphql.Field{
-				Type: graphql.String,
-			},
-			"Email": &graphql.Field{
-				Type: graphql.String,
-			},
-			"PhoneNumber": &graphql.Field{
-				Type: graphql.String,
-			},
-			"Type": &graphql.Field{
-				Type: graphql.String,
-			},
-			"ID": &graphql.Field{
-				Type: graphql.String,
-			},
-			"Password": &graphql.Field{
-				Type: graphql.String,
-			},
-			"DiscordID": &graphql.Field{
-				Type: graphql.String,
-			},
-		},
-	})
+	// UserType := graphql.NewObject(graphql.ObjectConfig{
+	// 	Name: "user",
+	// 	Fields: graphql.Fields{
+	// 		"FName": &graphql.Field{
+	// 			Type: graphql.String,
+	// 		},
+	// 		"LName": &graphql.Field{
+	// 			Type: graphql.String,
+	// 		},
+	// 		"Email": &graphql.Field{
+	// 			Type: graphql.String,
+	// 		},
+	// 		"PhoneNumber": &graphql.Field{
+	// 			Type: graphql.String,
+	// 		},
+	// 		"Type": &graphql.Field{
+	// 			Type: graphql.String,
+
+	// 		},
+	// 		"ID": &graphql.Field{
+	// 			Type: graphql.String,
+	// 		},
+	// 		"Password": &graphql.Field{
+	// 			Type: graphql.String,
+	// 		},
+	// 		"DiscordID": &graphql.Field{
+	// 			Type: graphql.String,
+	// 		},
+	// 	},
+	// })
 
 	rootMutation := graphql.ObjectConfig(graphql.ObjectConfig{
-		Name: "Mutation",
+		Name: "RootMutation",
 		Fields: graphql.Fields{
 			"createUser": &graphql.Field{
-				Type: UserType,
+				Type:        UserTokenType,
+				Description: "Update existing todo, mark it done or not done",
 				Args: graphql.FieldConfigArgument{
-					"FName": &graphql.ArgumentConfig{
+					"fname": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
 					},
-					"LName": &graphql.ArgumentConfig{
+					"lname": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
 					},
-					"Email": &graphql.ArgumentConfig{
+					"email": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
 					},
-					"PhoneNumber": &graphql.ArgumentConfig{
+					"phonenumber": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
 					},
-					"Type": &graphql.ArgumentConfig{
+					"type": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
 					},
-					"ID": &graphql.ArgumentConfig{
+					"id": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
 					},
-					"Password": &graphql.ArgumentConfig{
+					"password": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
 					},
-					"DiscordID": &graphql.ArgumentConfig{
+					"discordid": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
 					},
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 					validUser := ValidateInfo(params)
-					success := NewUser(validUser, collection)
-					payload := MutationPayload{
-						Success: success,
-						Errors:  nil,
-						Token:   "1234",
+					NewUser(validUser, collection)
+					newUserToken := UserToken{
+						Token:      "12345",
+						ExpireDate: 12345,
 					}
-					return payload, nil
+
+					return newUserToken, nil
 				},
 			},
 		},
 	})
 
 	rootQuery := graphql.ObjectConfig(graphql.ObjectConfig{
-		Name: "Query",
+		Name: "RootQuery",
 		Fields: graphql.Fields{
-			"User": &graphql.Field{
-				Type: graphql.NewList(UserType),
+			"query": &graphql.Field{
+				Type: UserTokenType,
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					return nil, nil
+					newUserToken := UserToken{
+						Token:      "12345",
+						ExpireDate: 12345,
+					}
+
+					return newUserToken, nil
 				},
 			},
 		},
 	})
-
 	schemaConfig := graphql.SchemaConfig{
 		Query:    graphql.NewObject(rootQuery),
 		Mutation: graphql.NewObject(rootMutation),
 	}
 	schema, err := graphql.NewSchema(schemaConfig)
+
 	if err != nil {
 		log.Fatalf("failed to create new schema, error: %v", err)
 	}
 
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
-		result := graphql.Do(graphql.Params{
-			Schema:        schema,
-			RequestString: r.URL.Query().Get("query"),
-		})
+		result := executeQuery(r.URL.Query().Get("query"), schema)
 		json.NewEncoder(w).Encode(result)
 	})
-	http.ListenAndServe(":12345", nil)
-	graphiqlHandler, err := graphiql.NewGraphiqlHandler("http://localhost:12345/graphql")
-	if err != nil {
-		panic(err)
+	http.ListenAndServe(":4000", nil)
+}
+func executeQuery(query string, schema graphql.Schema) *graphql.Result {
+	result := graphql.Do(graphql.Params{
+		Schema:        schema,
+		RequestString: query,
+	})
+	if len(result.Errors) > 0 {
+		fmt.Printf("wrong result, unexpected errors: %v", result.Errors)
 	}
-
-	http.Handle("/graphiql", graphiqlHandler)
-	http.ListenAndServe(":4040", nil)
+	return result
 }
