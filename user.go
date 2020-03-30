@@ -80,11 +80,6 @@ func ValidateInfo(params graphql.ResolveParams) ValidatedUser {
 	return returnUser
 }
 
-func validatePassword(password string) bool {
-
-	return false
-}
-
 func NewUser(userInfo ValidatedUser, collection *gocb.Collection) bool {
 	if userInfo.UserValid {
 
@@ -116,7 +111,7 @@ func NewUser(userInfo ValidatedUser, collection *gocb.Collection) bool {
 	return false
 }
 
-func UpdateUser(userInfo User, userInfoUpdated User) bool {
+func UpdateUser(modifyDetails ModifyUser, collection *gocb.Collection) bool {
 	//TODO: Implement
 	return false
 }
