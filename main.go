@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/couchbase/gocb"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/graphql-go/graphql"
 	"github.com/joho/godotenv"
 )
@@ -79,6 +80,11 @@ type ModifyUser struct {
 	Value       string `json:"value"`
 	UserToken   string `json:"token"`
 	Email       string `json:"email"`
+}
+
+type Claims struct {
+	Username string `json:"username"`
+	jwt.StandardClaims
 }
 
 func main() {
