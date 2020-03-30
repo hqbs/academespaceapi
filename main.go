@@ -74,6 +74,13 @@ type MutationPayload struct {
 	Token   string   `json:"token,omitempty"`
 }
 
+type ModifyUser struct {
+	ModifyField string `json:"modifyfield"`
+	Value       string `json:"value"`
+	UserToken   string `json:"token"`
+	Email       string `json:"email"`
+}
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -252,15 +259,18 @@ func main() {
 	rootQuery := graphql.ObjectConfig(graphql.ObjectConfig{
 		Name: "RootQuery",
 		Fields: graphql.Fields{
-			"query": &graphql.Field{
-				Type: UserTokenType,
+			"userExists": &graphql.Field{
+				Type:        graphql.Boolean,
+				Description: "Check to see if a user exists",
+				Args: graphql.FieldConfigArgument{
+					"email": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					newUserToken := UserToken{
-						Token:      "12345",
-						ExpireDate: 12345,
-					}
+					returnVal := UserExist(params.Args["email"].(string), collection)
 
-					return newUserToken, nil
+					return returnVal, nil
 				},
 			},
 		},
