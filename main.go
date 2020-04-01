@@ -13,14 +13,19 @@ import (
 	"github.com/joho/godotenv"
 )
 
+type APIError struct {
+	Error   bool   `json:"error"`
+	Message string `json:"message"`
+}
+
 type UserToken struct {
 	Token      string `json:"token"`
-	ExpireDate int    `json:"expiredate"`
+	ExpireDate int64  `json:"expiredate"`
 }
 
 type UserPassReset struct {
 	URLToken   string `json:"urltoken"`
-	ExpireDate int    `json:"expiredate"`
+	ExpireDate int64  `json:"expiredate"`
 }
 
 type StudentClass struct {
