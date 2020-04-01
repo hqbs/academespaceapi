@@ -5,9 +5,18 @@ import (
 	"os"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/joho/godotenv"
 )
+
+/*
+	TODO: huge overarching todo:
+	- Refactor to work with the DB
+	- Make sure returning exists so the API can return the correct info
+	- Build these into the API and make the calls during user creation
+	- Eventually implement variable security
+	- Remove collection comments after testing is complete
+*/
 
 func getEnv() {
 	err := godotenv.Load()
@@ -18,9 +27,10 @@ func getEnv() {
 
 }
 
-func genToken(email string) {
+func genToken(email string /*collection *gocb.Collection*/) {
+	getEnv()
 	jwtSecret := os.Getenv("JWT_SECRET")
-	expirationTime := time.Now().Add(5 * time.Minute)
+	expirationTime := time.Now().Add(10 * time.Minute)
 	// Create the JWT claims, which includes the username and expiry time
 	claims := &Claims{
 		Email: email,
@@ -37,46 +47,56 @@ func genToken(email string) {
 	if err != nil {
 		//TODO: handle
 	}
+	//TODO: put token and expire date into database
+	fmt.Println(tokenString)
 
 }
 
-func validateToken(tokenString string) {
-
+func validateToken(tokenString string, userTokenInfo UserToken /*collection *gocb.Collection*/) bool {
+	//TODO: start with database query to check to see if the token is the same if not invalid
+	//TODO: Remove variable userTokenInfo and implement DB search
 	// Initialize a new instance of `Claims`
-	claims := &Claims{}
-
-	// Parse the JWT string and store the result in `claims`.
-	// Note that we are passing the key in this method as well. This method will return an error
-	// if the token is invalid (if it has expired according to the expiry time we set on sign in),
-	// or if the signature does not match
-	tkn, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
-	})
-	if err != nil {
-		if err == jwt.ErrSignatureInvalid {
-			//TODO: Handle
+	if tokenString == userTokenInfo.Token {
+		// Pass 1 Tokens are equal!
+		if time.Now().Unix() > userTokenInfo.ExpireDate {
+			// TOKEN EXPIRED !
+			return false
+		} else {
+			claims := &Claims{}
+			getEnv()
+			jwtSecret := os.Getenv("JWT_SECRET")
+			// Parse the JWT string and store the result in `claims`.
+			// Note that we are passing the key in this method as well. This method will return an error
+			// if the token is invalid (if it has expired according to the expiry time we set on sign in),
+			// or if the signature does not match
+			tkn, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+				return jwtSecret, nil
+			})
+			if err != nil {
+				if err == jwt.ErrSignatureInvalid {
+					return false
+				}
+			}
+			if !tkn.Valid {
+				return false
+			}
+			return true
 		}
+
+	} else {
+		return false
 	}
-	if !tkn.Valid {
-		//TODO: Handle
-	}
+
 }
 
-func renewToken(tokenString string, tokenExpire int) {
-	// We ensure that a new token is not issued until enough time has elapsed
-	// In this case, a new token will only be issued if the old token is within
-	// 30 seconds of expiry. Otherwise, return a bad request status
-	if time.Unix(tokenExpire, 0).Sub(time.Now()) > 30*time.Second {
+func renewToken(email string, tokenString string, tokenExpire int64 /*collection *gocb.Collection*/) {
+	// If expires in 30 seconds
+	if tokenExpire > (30 * time.Second).Unix() {
 		// Not expired
 	} else {
-		// Now, create a new token for the current use, with a renewed expiration time
-		expirationTime := time.Now().Add(5 * time.Minute)
-		claims.ExpiresAt = expirationTime.Unix() // TODO: Change claims to DB work - this needs to exist in the database
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-		tokenString, err := token.SignedString(jwtKey)
-		if err != nil {
-			// TODO: Handle
-		}
+		// Generate a new token, pass token back
+		genToken(email, collection)
+
 	}
 
 }
