@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/couchbase/gocb"
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/graphql-go/graphql"
 	"github.com/joho/godotenv"
 )
@@ -83,7 +83,7 @@ type ModifyUser struct {
 }
 
 type Claims struct {
-	Username string `json:"username"`
+	Email string `json:"email"`
 	jwt.StandardClaims
 }
 
