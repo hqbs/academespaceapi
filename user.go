@@ -18,7 +18,7 @@ import (
 type UserValidator struct {
 	FName       string `validate:"nonzero,min=2,max=100"`
 	LName       string `validate:"nonzero,min=2,max=100"`
-	Email       string `validate:"nonzero"`                                                // https://www.golangprograms.com/regular-expression-to-validate-email-address.html
+	Email       string `validate:"nonzero"`
 	PhoneNumber string `validate:"min=4,max=40,regexp=^(\(?\+?[0-9]*\)?)?[0-9_\- \(\)]*$"` // http://regexlib.com/REDetails.aspx?regexp_id=73
 	Type        string `validate:"nonzero"`
 	ID          string `validate:"nonzero"`
