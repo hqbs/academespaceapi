@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/couchbase/gocb"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/joho/godotenv"
 )
@@ -102,4 +103,34 @@ func RenewToken(email string, id string, tokenString string, tokenExpire int64) 
 
 	return renewToken, renewError
 
+}
+
+func GetCurrentToken(email string, collection *gocb.Collection) (UserToken, APIError) {
+	returnToken := UserToken{}
+	returnError := APIError{}
+	ops := []gocb.LookupInSpec{
+		gocb.GetSpec("token.token", &gocb.GetSpecOptions{}),
+		gocb.GetSpec("token.expiredate", &gocb.GetSpecOptions{}),
+	}
+	getResult, err := collection.LookupIn(email, ops, &gocb.LookupInOptions{})
+	if err != nil {
+		panic(err)
+		//TODO: Create API Err
+	}
+
+	var currentToken string
+	var currentExpireDate int64
+	err = getResult.ContentAt(0, &currentToken)
+	if err != nil {
+		panic(err)
+		// Create API Err
+	}
+	err = getResult.ContentAt(1, &currentExpireDate)
+	if err != nil {
+		panic(err)
+		// Create API Err
+	}
+	returnToken.Token = currentToken
+	returnToken.ExpireDate = currentExpireDate
+	return returnToken, returnError
 }
