@@ -124,20 +124,20 @@ func main() {
 	//TODO: implement
 
 	// GraphQL
-	// MutPayloadType := graphql.NewObject(graphql.ObjectConfig{
-	// 	Name: "mutpayload",
-	// 	Fields: graphql.Fields{
-	// 		"Success": &graphql.Field{
-	// 			Type: graphql.Boolean,
-	// 		},
-	// 		"Errors": &graphql.Field{
-	// 			Type: graphql.NewList(graphql.String),
-	// 		},
-	// 		"Token": &graphql.Field{
-	// 			Type: graphql.String,
-	// 		},
-	// 	},
-	// })
+	MutPayloadType := graphql.NewObject(graphql.ObjectConfig{
+		Name: "mutpayload",
+		Fields: graphql.Fields{
+			"Success": &graphql.Field{
+				Type: graphql.Boolean,
+			},
+			"Errors": &graphql.Field{
+				Type: graphql.NewList(graphql.String),
+			},
+			"Token": &graphql.Field{
+				Type: graphql.String,
+			},
+		},
+	})
 
 	// StudentClassType := graphql.NewObject(graphql.ObjectConfig{
 	// 	Name: "studentclass",
@@ -166,17 +166,17 @@ func main() {
 	// 	},
 	// })
 
-	UserTokenType := graphql.NewObject(graphql.ObjectConfig{
-		Name: "usertoken",
-		Fields: graphql.Fields{
-			"Token": &graphql.Field{
-				Type: graphql.String,
-			},
-			"ExpireDate": &graphql.Field{
-				Type: graphql.Int,
-			},
-		},
-	})
+	// UserTokenType := graphql.NewObject(graphql.ObjectConfig{
+	// 	Name: "usertoken",
+	// 	Fields: graphql.Fields{
+	// 		"Token": &graphql.Field{
+	// 			Type: graphql.String,
+	// 		},
+	// 		"ExpireDate": &graphql.Field{
+	// 			Type: graphql.Int,
+	// 		},
+	// 	},
+	// })
 
 	// UserPassResetType := graphql.NewObject(graphql.ObjectConfig{
 	// 	Name: "userpassreset",
@@ -225,7 +225,7 @@ func main() {
 		Name: "RootMutation",
 		Fields: graphql.Fields{
 			"createUser": &graphql.Field{
-				Type:        UserTokenType,
+				Type:        MutPayloadType,
 				Description: "Update existing todo, mark it done or not done",
 				Args: graphql.FieldConfigArgument{
 					"fname": &graphql.ArgumentConfig{
@@ -243,9 +243,6 @@ func main() {
 					"type": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
 					},
-					"id": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.String),
-					},
 					"password": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
 					},
@@ -255,13 +252,10 @@ func main() {
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 					validUser := ValidateInfo(params)
-					NewUser(validUser, collection)
-					newUserToken := UserToken{
-						Token:      "12345",
-						ExpireDate: 12345,
-					}
+					returnToken, createUserErrors := NewUser(validUser, collection)
+					createUserErrors.Token = returnToken.Token
 
-					return newUserToken, nil
+					return createUserErrors, nil
 				},
 			},
 		},
@@ -282,6 +276,29 @@ func main() {
 					returnVal := UserExist(params.Args["email"].(string), collection)
 
 					return returnVal, nil
+				},
+			},
+			"validateUserToken": &graphql.Field{
+				Type:        graphql.Boolean,
+				Description: "Checks user JWT token for validity",
+				Args: graphql.FieldConfigArgument{
+					"email": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"currenttoken": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+				},
+				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+					userExists := UserExist(params.Args["email"].(string), collection)
+
+					if userExists {
+						dbToken, _ := GetCurrentToken(params.Args["email"].(string), collection)
+						tokenValid := ValidateToken(params.Args["currenttoken"].(string), dbToken)
+						return tokenValid, nil
+					} else {
+						return false, nil
+					}
 				},
 			},
 		},
