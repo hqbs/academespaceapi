@@ -62,6 +62,7 @@ func ValidateInfo(params graphql.ResolveParams) ValidatedUser {
 	if err != nil {
 		//TODO: handle
 	}
+
 	returnUser := ValidatedUser{
 		ValidUser: User{
 			FName:       params.Args["fname"].(string),
@@ -76,39 +77,44 @@ func ValidateInfo(params graphql.ResolveParams) ValidatedUser {
 		UserValid: userValid,
 		Errors:    errOuts,
 	}
-
+	newToken, tokenErr := GenToken(params.Args["email"].(string), returnUser.ValidUser.ID)
+	returnUser.ValidUser.Token = newToken
+	if tokenErr.Error {
+		returnUser.Errors = append(returnUser.Errors, tokenErr.Message)
+	}
 	return returnUser
 }
 
-func NewUser(userInfo ValidatedUser, collection *gocb.Collection) bool {
+func NewUser(userInfo ValidatedUser, collection *gocb.Collection) (UserToken, MutationPayload) {
+	returnErr := MutationPayload{}
+	returnToken := userInfo.ValidUser.Token
 	if userInfo.UserValid {
 
 		checkUser, err := collection.Get(userInfo.ValidUser.Email, nil)
 		if err != nil {
-			// TODO: API json panic
-			//log.Fatal(err)
+			returnErr.Success = false
+			returnErr.Errors = append(returnErr.Errors, "Account Creation Error, please try again later. Dev Code: ERRNEWUSRDB")
 		}
 		if checkUser != nil {
-			// TODO: API JSON return of why didnt work
+			returnErr.Success = false
+			returnErr.Errors = append(returnErr.Errors, "Account Creation Error: Email Already in Use!")
 		} else {
 			_, err = collection.Upsert(userInfo.ValidUser.Email, userInfo.ValidUser, &gocb.UpsertOptions{})
 			if err != nil {
-				//TODO: Handle
-				//log.Fatal(err)
-			}
-
-			if err != nil {
-				//TODO: handle
-				//log.Fatal(err)
+				returnErr.Success = false
+				returnErr.Errors = append(returnErr.Errors, "Account Creation Error, please try again later. Dev Code: ERRNEWUSRDBUP")
 			}
 
 		}
 
 	} else {
-		return false
+		returnErr.Errors = append(returnErr.Errors, userInfo.Errors...)
+		returnErr.Success = false
+		returnErr.Errors = append(returnErr.Errors, "Account Creation Error, please try again later. Dev Code: ERRNEWUSRNVU")
+		return returnToken, returnErr
 	}
 
-	return false
+	return returnToken, returnErr
 }
 
 func UpdateUser(modifyDetails ModifyUser, collection *gocb.Collection) bool {
