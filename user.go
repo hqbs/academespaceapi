@@ -127,14 +127,17 @@ func RemoveUser(userInfo User) bool {
 	return false
 }
 
-func UserExist(email string, collection *gocb.Collection) bool {
+func UserExist(email string, collection *gocb.Collection) (bool, APIError) {
+	apiErr := APIError{}
 	checkUser, err := collection.Get(email, nil)
 	if err != nil {
-		return false
+		apiErr.Error = true
+		apiErr.Message = "Account Validation Error, please try again later."
+		return false, apiErr
 	}
 	if checkUser != nil {
-		return true
+		return true, apiErr
 	}
-	return false
+	return false, apiErr
 
 }
