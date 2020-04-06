@@ -290,12 +290,21 @@ func main() {
 					},
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					userExists, _ := UserExist(params.Args["email"].(string), collection)
+					userExists, userExistErr := UserExist(params.Args["email"].(string), collection)
+
+					if userExistErr.Error {
+						return false, nil
+					}
 
 					if userExists {
-						dbToken, _ := GetCurrentToken(params.Args["email"].(string), collection)
+						dbToken, dbTokenErr := GetCurrentToken(params.Args["email"].(string), collection)
 						tokenValid := ValidateToken(params.Args["currenttoken"].(string), dbToken)
-						return tokenValid, nil
+						if dbTokenErr.Error {
+							return false, nil
+						} else {
+							return tokenValid, nil
+						}
+
 					} else {
 						return false, nil
 					}
