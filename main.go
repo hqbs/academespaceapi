@@ -273,7 +273,7 @@ func main() {
 					},
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					returnVal := UserExist(params.Args["email"].(string), collection)
+					returnVal, _ := UserExist(params.Args["email"].(string), collection)
 
 					return returnVal, nil
 				},
@@ -290,7 +290,7 @@ func main() {
 					},
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					userExists := UserExist(params.Args["email"].(string), collection)
+					userExists, _ := UserExist(params.Args["email"].(string), collection)
 
 					if userExists {
 						dbToken, _ := GetCurrentToken(params.Args["email"].(string), collection)
