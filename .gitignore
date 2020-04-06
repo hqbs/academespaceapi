@@ -21,3 +21,6 @@ scratch.go
 #ignore environment variables 
 .env
 *.env
+
+#ignore diagrams 
+*.drawio
