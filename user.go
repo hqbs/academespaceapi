@@ -89,20 +89,22 @@ func NewUser(userInfo ValidatedUser, collection *gocb.Collection) (UserToken, Mu
 	returnErr := MutationPayload{}
 	returnToken := userInfo.ValidUser.Token
 	if userInfo.UserValid {
+		exists, _ := UserExist(userInfo.ValidUser.Email, collection)
+		if exists {
+			returnErr.Success = false
+			returnErr.Errors = append(returnErr.Errors, "Email already in use!")
+			returnErr.Token = ""
+			returnToken.Token = ""
+			returnToken.ExpireDate = 0000
 
-		checkUser, err := collection.Get(userInfo.ValidUser.Email, nil)
-		if err != nil {
-			returnErr.Success = false
-			returnErr.Errors = append(returnErr.Errors, "Account Creation Error, please try again later. Dev Code: ERRNEWUSRDB")
-		}
-		if checkUser != nil {
-			returnErr.Success = false
-			returnErr.Errors = append(returnErr.Errors, "Account Creation Error: Email Already in Use!")
 		} else {
-			_, err = collection.Upsert(userInfo.ValidUser.Email, userInfo.ValidUser, &gocb.UpsertOptions{})
+			_, err := collection.Upsert(userInfo.ValidUser.Email, userInfo.ValidUser, &gocb.UpsertOptions{})
 			if err != nil {
 				returnErr.Success = false
 				returnErr.Errors = append(returnErr.Errors, "Account Creation Error, please try again later. Dev Code: ERRNEWUSRDBUP")
+				returnErr.Token = ""
+				returnToken.Token = ""
+				returnToken.ExpireDate = 0000
 			}
 
 		}
@@ -111,6 +113,9 @@ func NewUser(userInfo ValidatedUser, collection *gocb.Collection) (UserToken, Mu
 		returnErr.Errors = append(returnErr.Errors, userInfo.Errors...)
 		returnErr.Success = false
 		returnErr.Errors = append(returnErr.Errors, "Account Creation Error, please try again later. Dev Code: ERRNEWUSRNVU")
+		returnErr.Token = ""
+		returnToken.Token = ""
+		returnToken.ExpireDate = 0000
 		return returnToken, returnErr
 	}
 
@@ -129,12 +134,17 @@ func RemoveUser(userInfo User) bool {
 
 func UserExist(email string, collection *gocb.Collection) (bool, APIError) {
 	apiErr := APIError{}
-	checkUser, err := collection.Get(email, nil)
-	if err != nil {
-		apiErr.Error = true
-		apiErr.Message = "Account Validation Error, please try again later."
-		return false, apiErr
-	}
+	checkUser, _ := collection.Get(email, nil)
+	//TODO: Swap to check exist function couchbase
+	// if err != nil {
+	// 	if err.error_name == "KEY_ENOENT" {
+	// 		return false, apiErr
+	// 	}
+	// 	apiErr.Error = true
+	// 	apiErr.Message = "Account Validation Error, please try again later."
+	// 	panic(err)
+	// 	return false, apiErr
+	// }
 	if checkUser != nil {
 		return true, apiErr
 	}
