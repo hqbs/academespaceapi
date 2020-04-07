@@ -360,9 +360,11 @@ func main() {
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
 		result := executeQuery(r.URL.Query().Get("query"), schema)
 		json.NewEncoder(w).Encode(result)
+		enableCors(&w)
 	})
 	http.ListenAndServe(":4000", nil)
 }
+
 func executeQuery(query string, schema graphql.Schema) *graphql.Result {
 	result := graphql.Do(graphql.Params{
 		Schema:        schema,
@@ -372,4 +374,7 @@ func executeQuery(query string, schema graphql.Schema) *graphql.Result {
 		fmt.Printf("wrong result, unexpected errors: %v", result.Errors)
 	}
 	return result
+}
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
