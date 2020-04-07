@@ -9,7 +9,7 @@ Version 1.0!
 http://APIENDPOINTIP/graphql?query={validateUserToken(email:"STRING",currenttoken:"STRING")}
 
 ### Sample Mutation 
-http://APIENDPOINTIP/graphql?query=mutation+_{createUser(fname:"STRING",lname:"STRING",email:"STRING",phonenumber:"STRING",type:"STRING",password:"STRING",discordid:"STRING"){Success Errors Token}}
+http://APIENDPOINTIP/graphql?query=mutation+_{createUser(fname:"STRING",lname:"STRING",email:"STRING",phonenumber:"STRING",type:"STRING",password:"STRING",discordid:"STRING"){success errors token}}
 
 ## Queries and Return Types
 
