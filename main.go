@@ -358,9 +358,10 @@ func main() {
 	}
 
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
+		enableCors(&w)
 		result := executeQuery(r.URL.Query().Get("query"), schema)
 		json.NewEncoder(w).Encode(result)
-		enableCors(&w)
+
 	})
 	http.ListenAndServe(":4000", nil)
 }
