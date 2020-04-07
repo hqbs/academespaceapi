@@ -50,7 +50,7 @@ func GenToken(email string, id string) (UserToken, APIError) {
 
 }
 
-func ValidateToken(tokenString string, userTokenInfo UserToken) bool {
+func ValidateToken(tokenString string, userTokenInfo UserToken, id string) bool {
 
 	// Initialize a new instance of `Claims`
 	if tokenString == userTokenInfo.Token {
@@ -62,7 +62,7 @@ func ValidateToken(tokenString string, userTokenInfo UserToken) bool {
 		} else {
 			claims := &Claims{}
 			getEnv()
-			jwtSecret := os.Getenv("JWT_SECRET")
+			jwtSecret := fmt.Sprintf("%s%s", os.Getenv("JWT_SECRET"), id)
 			// Parse the JWT string and store the result in `claims`.
 			// Note that we are passing the key in this method as well. This method will return an error
 			// if the token is invalid (if it has expired according to the expiry time we set on sign in),
