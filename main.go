@@ -127,13 +127,13 @@ func main() {
 	MutPayloadType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "mutpayload",
 		Fields: graphql.Fields{
-			"Success": &graphql.Field{
+			"success": &graphql.Field{
 				Type: graphql.Boolean,
 			},
-			"Errors": &graphql.Field{
+			"errors": &graphql.Field{
 				Type: graphql.NewList(graphql.String),
 			},
-			"Token": &graphql.Field{
+			"token": &graphql.Field{
 				Type: graphql.String,
 			},
 		},
