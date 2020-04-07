@@ -25,7 +25,7 @@ func GenToken(email string, id string) (UserToken, APIError) {
 		Error:   false,
 		Message: "",
 	}
-	getEnv()
+	// getEnv() For prod
 	jwtSecret := fmt.Sprintf("%s%s", os.Getenv("JWT_SECRET"), id)
 	expirationTime := time.Now().Add(10 * time.Minute)
 	claims := Claims{
@@ -61,7 +61,7 @@ func ValidateToken(tokenString string, userTokenInfo UserToken, id string) bool 
 			return false
 		} else {
 			claims := &Claims{}
-			getEnv()
+			// getEnv() for prod
 			jwtSecret := fmt.Sprintf("%s%s", os.Getenv("JWT_SECRET"), id)
 			// Parse the JWT string and store the result in `claims`.
 			// Note that we are passing the key in this method as well. This method will return an error

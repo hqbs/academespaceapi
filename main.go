@@ -10,7 +10,6 @@ import (
 	"github.com/couchbase/gocb"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/graphql-go/graphql"
-	"github.com/joho/godotenv"
 )
 
 type APIError struct {
@@ -93,11 +92,11 @@ type Claims struct {
 }
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Println("error loading env file")
-		//log.Fatal(err)
-	}
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	fmt.Println("error loading env file")
+	// 	//log.Fatal(err)
+	// }
 	var (
 		dbUser   = os.Getenv("COUCH_USER")
 		dbPass   = os.Getenv("COUCH_PASS")
