@@ -93,7 +93,7 @@ func RenewToken(email string, id string, tokenString string, tokenExpire int64) 
 	renewToken := UserToken{}
 	renewError := APIError{}
 	// If expires in 30 seconds
-	if tokenExpire > (time.Now().Add(time.Second * 30)).Unix() {
+	if tokenExpire > (time.Now().Add(time.Hour * 24)).Unix() {
 		// Not expired
 	} else {
 		// Generate a new token, pass token back
