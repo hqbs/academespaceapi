@@ -290,24 +290,60 @@ func main() {
 					},
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					userExists, userExistErr := UserExist(params.Args["email"].(string), collection)
+					var id string
+					var userToken UserToken
+					ops := []gocb.LookupInSpec{
+						gocb.GetSpec("id", &gocb.GetSpecOptions{}),
+						gocb.GetSpec("token", &gocb.GetSpecOptions{}),
+					}
+					getResult, err := collection.LookupIn(params.Args["email"].(string), ops, &gocb.LookupInOptions{})
+					if err != nil {
 
-					if userExistErr.Error {
 						return false, nil
 					}
 
-					if userExists {
-						dbToken, dbTokenErr := GetCurrentToken(params.Args["email"].(string), collection)
-						tokenValid := ValidateToken(params.Args["currenttoken"].(string), dbToken)
-						if dbTokenErr.Error {
-							return false, nil
-						} else {
-							return tokenValid, nil
-						}
+					err = getResult.ContentAt(0, &id)
+					if err != nil {
 
+						return false, nil
+					}
+					err = getResult.ContentAt(1, &userToken)
+					if err != nil {
+
+						return false, nil
+					}
+					return ValidateToken(params.Args["currenttoken"].(string), userToken, id), nil
+				},
+			},
+			"login": &graphql.Field{
+				Type:        MutPayloadType,
+				Description: "Login!",
+				Args: graphql.FieldConfigArgument{
+					"email": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"password": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"token": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+				},
+				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+					returnVal, errorReturn := Login(params.Args["email"].(string), params.Args["password"].(string), params.Args["token"].(string), collection)
+					var errors []string
+					errors = append(errors, errorReturn.Message)
+					returnPayload := MutationPayload{
+
+						Errors: errors,
+						Token:  returnVal.Token,
+					}
+					if errorReturn.Error {
+						returnPayload.Success = false
 					} else {
-						return false, nil
+						returnPayload.Success = true
 					}
+					return returnPayload, nil
 				},
 			},
 		},
