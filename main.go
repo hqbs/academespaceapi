@@ -120,7 +120,6 @@ func main() {
 	}
 	bucket := cluster.Bucket(dbBucket)
 	collection := bucket.DefaultCollection()
-	//TODO: implement
 
 	// GraphQL
 	MutPayloadType := graphql.NewObject(graphql.ObjectConfig{
@@ -246,7 +245,7 @@ func main() {
 						Type: graphql.NewNonNull(graphql.String),
 					},
 					"discordid": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.String),
+						Type: graphql.String,
 					},
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
