@@ -12,10 +12,28 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
+/* API Structs */
+
 type APIError struct {
 	Error   bool   `json:"error"`
 	Message string `json:"message"`
 }
+
+type ValidatedUser struct {
+	ValidUser User     `json:"validuser"`
+	UserValid bool     `json:"uservalid"`
+	Errors    []string `json:"errors"`
+}
+
+type MutationPayload struct {
+	Success bool     `json:"success"`
+	Errors  []string `json:"errors"`
+	Token   string   `json:"token,omitempty"`
+}
+
+/* API Structs End */
+
+/* Token Generation Structs */
 
 type UserToken struct {
 	Token      string `json:"token"`
@@ -27,56 +45,36 @@ type UserPassReset struct {
 	ExpireDate int64  `json:"expiredate"`
 }
 
-type StudentClass struct {
-	ClassName     string `json:"classname"`
-	CourseNumber  int    `json:"coursenumber,omitempty"`
-	CourseSection int    `json:"coursesection,omitempty"`
-	Professor     string `json:"professor"`
-	ProfEmail     string `json:"profemail"`
-	University    string `json:"university"`
-	UniversityID  string `json:"universityid"`
+type Claims struct {
+	Email string `json:"email"`
+	jwt.StandardClaims
 }
+
+/* Token Generation Structs End */
+
+/* User Structs */
 
 type User struct {
-	FName       string         `json:"fname"`
-	LName       string         `json:"lname"`
-	Email       string         `json:"email"`
-	PhoneNumber string         `json:"phonenumber"`
-	Type        string         `json:"type"`
-	ID          string         `json:"id"`
-	Password    string         `json:"password"`
-	DiscordID   string         `json:"discordid,omitempty"`
-	Servers     []DCordServer  `json:"server,omitempty"`
-	Token       UserToken      `json:"token,omitempty"`
-	PassReset   UserPassReset  `json:"passreset,omitempty"`
-	Classes     []StudentClass `json:"classes,omitempty"`
+	FName       string          `json:"fname"`
+	LName       string          `json:"lname"`
+	Email       string          `json:"email"`
+	PhoneNumber string          `json:"phonenumber"`
+	Type        string          `json:"type"`
+	ID          string          `json:"id"`
+	Password    string          `json:"password"`
+	DiscordID   string          `json:"discordid,omitempty"`
+	Token       UserToken       `json:"token,omitempty"`
+	PassReset   UserPassReset   `json:"passreset,omitempty"`
+	Classrooms  []UserClassroom `json:"classrooms,omitempty"`
 }
 
-type ValidatedUser struct {
-	ValidUser User     `json:"validuser"`
-	UserValid bool     `json:"uservalid"`
-	Errors    []string `json:"errors"`
-}
-
-type DCordServer struct {
-	Name     string `json:"name"`
-	UserType string `json:"usertype"`
-	/*
-		Under this will have lots of omit if empty
-		Profs/Teachers/Owners will need admin info
-		Students will need basic info
-		TAs will need semi admin/privledged access
-	*/
-	Role        string `json:"role"`
-	ID          string `json:"id"`
-	AccessHash  string `json:"accesshash"`
-	DisplayName string `json:"displayname"`
-}
-
-type MutationPayload struct {
-	Success bool     `json:"success"`
-	Errors  []string `json:"errors"`
-	Token   string   `json:"token,omitempty"`
+type UserClassroom struct {
+	CRID          string `json:"crid"`
+	Professor     string `json:"professor"`
+	ClassName     string `json:"classname"`
+	ClassNumber   string `json:"classnumber"`
+	SectionNumber string `json:"sectionnumber"`
+	JoinCode      string `json:"joincode"`
 }
 
 type ModifyUser struct {
@@ -86,39 +84,46 @@ type ModifyUser struct {
 	Email       string `json:"email"`
 }
 
-type Claims struct {
-	Email string `json:"email"`
-	jwt.StandardClaims
-}
+/* User Structs End */
+
+/* Classroom Structs */
 
 type Classroom struct {
-	CRID           string    `json:"crid"`
-	University     string    `json:"university"`
-	Professor      string    `json:"professor"`
-	ClassName      string    `json:"classname"`
-	ClassNumber    string    `json:"classnumber"`
-	SectionNumber  string    `json:"sectionnumber"`
-	ProfessorID    string    `json:"professorid"`
-	AllEmails      bool      `json:"allemails"`
-	ApprovedEmails []string  `json"approvedemails"`
-	JoinCode       string    `json:"joincode"`
-	StudentList    []Student `json:"studentlist"`
-	TAList         []TA      `json:"talist"`
-	DCordBotID     string    `json:"dcordbotid"`
-	DCordConnected bool      `json:"dcordconnected`
+	CRID              string    `json:"crid"`
+	University        string    `json:"university,omitempty"`
+	Professor         string    `json:"professor,omitempty"`
+	ProfessorEmail    string    `json:"professoremail"`
+	ClassName         string    `json:"classname,omitempty"`
+	ClassNumber       string    `json:"classnumber,omitempty"`
+	SectionNumber     string    `json:"sectionnumber,omitempty"`
+	ProfessorID       string    `json:"professorid"`
+	AllEmails         bool      `json:"allemails,omitempty"`
+	ApprovedEmails    []string  `json"approvedemails,omitempty"`
+	JoinCodeServer    string    `json:"joincodeserver,omitempty"`
+	StudentList       []Student `json:"studentlist,omitempty"`
+	TAList            []TA      `json:"talist,omitempty"`
+	DCordServerID     string    `json:"dcordserverid"`
+	DCordConnected    bool      `json:"dcordconnected"`
+	FrontEndConnected bool      `json:"frontendconnected,omitempty"`
 }
 
 type Student struct {
 	StudentEmail string `json:"studentemail"`
 	StudentName  string `json:"studentname"`
 	JoinCode     string `json:"joincode"`
+	DCordID      string `json:"dcordid"`
+	DCordNick    string `json:"dcordnick"`
 }
 
 type TA struct {
-	TAEmail  string `json:"taemail"`
-	TAName   string `json:"taname"`
-	JoinCode string `json:"joincode"`
+	TAEmail   string `json:"taemail"`
+	TAName    string `json:"taname"`
+	JoinCode  string `json:"joincode"`
+	DCordID   string `json:"dcordid"`
+	DCordNick string `json:"dcordnick"`
 }
+
+/* Classroom Structs End */
 
 func main() {
 	// err := godotenv.Load()
@@ -166,88 +171,6 @@ func main() {
 		},
 	})
 
-	// StudentClassType := graphql.NewObject(graphql.ObjectConfig{
-	// 	Name: "studentclass",
-	// 	Fields: graphql.Fields{
-	// 		"ClassName": &graphql.Field{
-	// 			Type: graphql.String,
-	// 		},
-	// 		"CourseNumber": &graphql.Field{
-	// 			Type: graphql.Int,
-	// 		},
-	// 		"CourseSection": &graphql.Field{
-	// 			Type: graphql.Int,
-	// 		},
-	// 		"Professor": &graphql.Field{
-	// 			Type: graphql.String,
-	// 		},
-	// 		"ProfEmail": &graphql.Field{
-	// 			Type: graphql.String,
-	// 		},
-	// 		"University": &graphql.Field{
-	// 			Type: graphql.String,
-	// 		},
-	// 		"UniversityID": &graphql.Field{
-	// 			Type: graphql.String,
-	// 		},
-	// 	},
-	// })
-
-	// UserTokenType := graphql.NewObject(graphql.ObjectConfig{
-	// 	Name: "usertoken",
-	// 	Fields: graphql.Fields{
-	// 		"Token": &graphql.Field{
-	// 			Type: graphql.String,
-	// 		},
-	// 		"ExpireDate": &graphql.Field{
-	// 			Type: graphql.Int,
-	// 		},
-	// 	},
-	// })
-
-	// UserPassResetType := graphql.NewObject(graphql.ObjectConfig{
-	// 	Name: "userpassreset",
-	// 	Fields: graphql.Fields{
-	// 		"URLToken": &graphql.Field{
-	// 			Type: graphql.String,
-	// 		},
-	// 		"ExpireDate": &graphql.Field{
-	// 			Type: graphql.Int,
-	// 		},
-	// 	},
-	// })
-
-	// UserType := graphql.NewObject(graphql.ObjectConfig{
-	// 	Name: "user",
-	// 	Fields: graphql.Fields{
-	// 		"FName": &graphql.Field{
-	// 			Type: graphql.String,
-	// 		},
-	// 		"LName": &graphql.Field{
-	// 			Type: graphql.String,
-	// 		},
-	// 		"Email": &graphql.Field{
-	// 			Type: graphql.String,
-	// 		},
-	// 		"PhoneNumber": &graphql.Field{
-	// 			Type: graphql.String,
-	// 		},
-	// 		"Type": &graphql.Field{
-	// 			Type: graphql.String,
-
-	// 		},
-	// 		"ID": &graphql.Field{
-	// 			Type: graphql.String,
-	// 		},
-	// 		"Password": &graphql.Field{
-	// 			Type: graphql.String,
-	// 		},
-	// 		"DiscordID": &graphql.Field{
-	// 			Type: graphql.String,
-	// 		},
-	// 	},
-	// })
-
 	rootMutation := graphql.ObjectConfig(graphql.ObjectConfig{
 		Name: "RootMutation",
 		Fields: graphql.Fields{
@@ -272,9 +195,6 @@ func main() {
 					},
 					"password": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
-					},
-					"discordid": &graphql.ArgumentConfig{
-						Type: graphql.String,
 					},
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
