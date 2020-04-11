@@ -91,6 +91,35 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
+type Classroom struct {
+	CRID           string    `json:"crid"`
+	University     string    `json:"university"`
+	Professor      string    `json:"professor"`
+	ClassName      string    `json:"classname"`
+	ClassNumber    string    `json:"classnumber"`
+	SectionNumber  string    `json:"sectionnumber"`
+	ProfessorID    string    `json:"professorid"`
+	AllEmails      bool      `json:"allemails"`
+	ApprovedEmails []string  `json"approvedemails"`
+	JoinCode       string    `json:"joincode"`
+	StudentList    []Student `json:"studentlist"`
+	TAList         []TA      `json:"talist"`
+	DCordBotID     string    `json:"dcordbotid"`
+	DCordConnected bool      `json:"dcordconnected`
+}
+
+type Student struct {
+	StudentEmail string `json:"studentemail"`
+	StudentName  string `json:"studentname"`
+	JoinCode     string `json:"joincode"`
+}
+
+type TA struct {
+	TAEmail  string `json:"taemail"`
+	TAName   string `json:"taname"`
+	JoinCode string `json:"joincode"`
+}
+
 func main() {
 	// err := godotenv.Load()
 	// if err != nil {
