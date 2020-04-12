@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	"github.com/couchbase/gocb"
 	"github.com/graphql-go/graphql"
 )
@@ -23,13 +21,15 @@ func CreateClassroomDiscord(params graphql.ResolveParams, collectionClass *gocb.
 			ProfessorEmail:   email,
 		}
 	} else {
-		//TODO: Return token error
+		returnError.Error = true
+		returnError.Message = "Token invalid"
 	}
-	result, err := collectionClass.Upsert(classID, newClassroom, &gocb.UpsertOptions{})
-	log.Println(result)
+	_, err := collectionClass.Upsert(classID, newClassroom, &gocb.UpsertOptions{})
+	//log.Println("this is an issue" + result)
 	if err != nil {
 
-		//TODO: Handle (err)
+		returnError.Error = true
+		returnError.Message = "Database upsert problem"
 	}
 	return returnError
 
@@ -40,14 +40,17 @@ func CreateClassroomFrontEnd(params graphql.ResolveParams, collectionClass *gocb
 	returnError := APIError{}
 
 	valid, email, classID := DiscordValidateToken(params.Args["token"].(string))
+
 	if valid {
-		// Search by the classID
-		// Verify email
-		// Add additional details and generate join code
+
+		var newlistTA []TA
+		var newlistStudent []Student
 		newClassroom = Classroom{
 			ClassName:     params.Args["classname"].(string),
 			ClassNumber:   params.Args["classnumber"].(string),
 			SectionNumber: params.Args["sectionnumber"].(string),
+			TAList:        newlistTA,
+			StudentList:   newlistStudent,
 		}
 		mops := []gocb.MutateInSpec{
 			gocb.UpsertSpec("classname", newClassroom.ClassName, &gocb.UpsertSpecOptions{
@@ -60,11 +63,11 @@ func CreateClassroomFrontEnd(params graphql.ResolveParams, collectionClass *gocb
 				CreatePath: true,
 			}),
 		}
-		result, err := collectionClass.MutateIn(classID, mops, &gocb.MutateInOptions{})
+		_, err := collectionClass.MutateIn(classID, mops, &gocb.MutateInOptions{})
 
 		if err != nil {
 
-			//TODO: Handle (err)
+			//TODO: handle
 		}
 		mops = []gocb.MutateInSpec{
 			gocb.ArrayAppendSpec("classrooms", classID, &gocb.ArrayAppendSpecOptions{
@@ -72,8 +75,8 @@ func CreateClassroomFrontEnd(params graphql.ResolveParams, collectionClass *gocb
 				CreatePath:  true,
 			}),
 		}
-		result, err = collectionUser.MutateIn(email, mops, &gocb.MutateInOptions{})
-		log.Println(result)
+		_, err = collectionUser.MutateIn(email, mops, &gocb.MutateInOptions{})
+
 		if err != nil {
 
 			//TODO: Handle (err)
@@ -104,38 +107,12 @@ func GetClassrooms(email string, collectionUser *gocb.Collection, collectionClas
 	}
 
 	for i := 0; i < len(userClasses); i++ {
-		ops = []gocb.LookupInSpec{
-			gocb.ExistsSpec("studentlist", &gocb.ExistsSpecOptions{}),
-			gocb.ExistsSpec("talist", &gocb.ExistsSpecOptions{}),
-		}
-		existsResult, err := collectionClass.LookupIn(userClasses[i], ops, &gocb.LookupInOptions{})
-		if err != nil {
-			panic(err)
-		}
-
-		var studentListExist bool
-		var taListExist bool
-		err = existsResult.ContentAt(0, &studentListExist)
-		if err != nil {
-			panic(err)
-		}
-		err = existsResult.ContentAt(1, &taListExist)
-		if err != nil {
-			panic(err)
-		}
 
 		ops := []gocb.LookupInSpec{
 			gocb.GetSpec("classname", &gocb.GetSpecOptions{}),
 			gocb.GetSpec("classnumber", &gocb.GetSpecOptions{}),
 			gocb.GetSpec("sectionnumber", &gocb.GetSpecOptions{}),
 			gocb.GetSpec("dcordserverid", &gocb.GetSpecOptions{}),
-		}
-		if studentListExist {
-			ops = append(ops, gocb.GetSpec("studentlist", &gocb.GetSpecOptions{}))
-
-		}
-		if taListExist {
-			ops = append(ops, gocb.GetSpec("talist", &gocb.GetSpecOptions{}))
 		}
 		getResult, err := collectionClass.LookupIn(userClasses[i], ops, &gocb.LookupInOptions{})
 
@@ -160,19 +137,6 @@ func GetClassrooms(email string, collectionUser *gocb.Collection, collectionClas
 		err = getResult.ContentAt(3, &tempClassroom.DCordServerID)
 		if err != nil {
 			//TODO: Handle (err)
-		}
-		if studentListExist {
-			err = getResult.ContentAt(4, &tempClassroom.StudentList)
-			if err != nil {
-				//TODO: Handle (err)
-			}
-		}
-
-		if taListExist {
-			err = getResult.ContentAt(5, &tempClassroom.TAList)
-			if err != nil {
-				//TODO: Handle (err)
-			}
 		}
 
 		userClassroomsInfo = append(userClassroomsInfo, tempClassroom)
