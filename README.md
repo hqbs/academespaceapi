@@ -1,6 +1,6 @@
-# dtaback
+# AcademeSpace API
 
-Version 1.0!
+Version 1.05!
 
 # Basic How To Use 
 ## Get request the API Example Below
@@ -79,5 +79,58 @@ createUser
      - Type: String
      - *Returns a valid token only when success is true*
 
+gendiscordtoken
+ - Arguments 
+   - email
+     - Type: String
+ - Return
+   - success
+     - Type: Boolean
+     - *Denotes any errors - false == errors*
+   - errors
+     - Type: []String
+     - *String array of all errors*
+   - token
+     - Type: String
+     - *Returns a valid token only when success is true*
+
+createserverd
+ - Arguments
+   - token
+     - Type: String
+   - professordcordid
+     - Type: String
+   - dcordserverid
+     - Type: String
+  - Return
+   - success
+     - Type: Boolean
+     - *Denotes any errors - false == errors*
+   - errors
+     - Type: []String
+     - *String array of all errors*
+   - token
+     - Type: String
+     - *Returns a valid token only when success is true*
 
 
+createclassroomfront 
+  - Arguments
+    - token
+      - Type: String
+    - classname
+      - Type: String
+    - classnumber
+      - Type: String
+    - sectionnumber
+      - Type: String
+  - Return
+   - success
+     - Type: Boolean
+     - *Denotes any errors - false == errors*
+   - errors
+     - Type: []String
+     - *String array of all errors*
+   - token
+     - Type: String
+     - *Returns a valid token only when success is true*
