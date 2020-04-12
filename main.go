@@ -19,6 +19,11 @@ type APIError struct {
 	Message string `json:"message"`
 }
 
+type DiscordAPIError struct {
+	Error   bool   `json:"error"`
+	Message string `json:"message"`
+}
+
 type ValidatedUser struct {
 	ValidUser User     `json:"validuser"`
 	UserValid bool     `json:"uservalid"`
@@ -50,22 +55,34 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
+type DiscordClaims struct {
+	Email       string `json:"email"`
+	ClassroomID string `json:"classroomid"`
+	jwt.StandardClaims
+}
+
+type DiscordConnectToken struct {
+	Token      string `json:"token"`
+	ExpireDate int64  `json:"expiredate"`
+}
+
 /* Token Generation Structs End */
 
 /* User Structs */
 
 type User struct {
-	FName       string          `json:"fname"`
-	LName       string          `json:"lname"`
-	Email       string          `json:"email"`
-	PhoneNumber string          `json:"phonenumber"`
-	Type        string          `json:"type"`
-	ID          string          `json:"id"`
-	Password    string          `json:"password"`
-	DiscordID   string          `json:"discordid,omitempty"`
-	Token       UserToken       `json:"token,omitempty"`
-	PassReset   UserPassReset   `json:"passreset,omitempty"`
-	Classrooms  []UserClassroom `json:"classrooms,omitempty"`
+	FName           string              `json:"fname"`
+	LName           string              `json:"lname"`
+	Email           string              `json:"email"`
+	PhoneNumber     string              `json:"phonenumber"`
+	Type            string              `json:"type"`
+	ID              string              `json:"id"`
+	Password        string              `json:"password"`
+	DiscordID       string              `json:"discordid,omitempty"`
+	Token           UserToken           `json:"token,omitempty"`
+	PassReset       UserPassReset       `json:"passreset,omitempty"`
+	Classrooms      []UserClassroom     `json:"classrooms,omitempty"`
+	ConnectionToken DiscordConnectToken `json:"connectiontoken,omitempty"`
 }
 
 type UserClassroom struct {
@@ -96,7 +113,7 @@ type Classroom struct {
 	ClassName         string    `json:"classname,omitempty"`
 	ClassNumber       string    `json:"classnumber,omitempty"`
 	SectionNumber     string    `json:"sectionnumber,omitempty"`
-	ProfessorID       string    `json:"professorid"`
+	ProfessorDCordID  string    `json:"professordcordid"`
 	AllEmails         bool      `json:"allemails,omitempty"`
 	ApprovedEmails    []string  `json"approvedemails,omitempty"`
 	JoinCodeServer    string    `json:"joincodeserver,omitempty"`
@@ -132,10 +149,11 @@ func main() {
 	// 	//log.Fatal(err)
 	// }
 	var (
-		dbUser   = os.Getenv("COUCH_USER")
-		dbPass   = os.Getenv("COUCH_PASS")
-		dbAddr   = os.Getenv("COUCH_ADDR")
-		dbBucket = os.Getenv("COUCH_U_BUCKET")
+		dbUser        = os.Getenv("COUCH_USER")
+		dbPass        = os.Getenv("COUCH_PASS")
+		dbAddr        = os.Getenv("COUCH_ADDR")
+		dbBucket      = os.Getenv("COUCH_U_BUCKET")
+		dbClassBucket = os.Getenv("COUCH_CLASS_BUCKET")
 	)
 
 	// Connect to DB
@@ -153,8 +171,9 @@ func main() {
 		//log.Fatal(err)
 	}
 	bucket := cluster.Bucket(dbBucket)
-	collection := bucket.DefaultCollection()
-
+	collectionUser := bucket.DefaultCollection()
+	bucketClass := cluster.Bucket(dbClassBucket)
+	collectionClass := bucketClass.DefaultCollection()
 	// GraphQL
 	MutPayloadType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "mutpayload",
@@ -170,6 +189,9 @@ func main() {
 			},
 		},
 	})
+
+	// Error   bool   `json:"error"`
+	// Message string `json:"message"`
 
 	rootMutation := graphql.ObjectConfig(graphql.ObjectConfig{
 		Name: "RootMutation",
@@ -199,10 +221,84 @@ func main() {
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 					validUser := ValidateInfo(params)
-					returnToken, createUserErrors := NewUser(validUser, collection)
+					returnToken, createUserErrors := NewUser(validUser, collectionUser)
 					createUserErrors.Token = returnToken.Token
 
 					return createUserErrors, nil
+				},
+			},
+			"gendiscordtoken": &graphql.Field{
+				Type:        MutPayloadType,
+				Description: "Generate Discord Connection Token",
+				Args: graphql.FieldConfigArgument{
+					"email": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+				},
+				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+					returnPayload := MutationPayload{}
+					dcordToken, apiError := DiscordTokenGen(params.Args["email"].(string))
+					returnPayload.Token = dcordToken.Token
+					if apiError.Error {
+						returnPayload.Success = false
+						returnPayload.Errors = append(returnPayload.Errors, apiError.Message)
+					}
+					return returnPayload, nil
+				},
+			},
+			"createserverd": &graphql.Field{
+				Type:        MutPayloadType,
+				Description: "Create discord server from bot",
+				Args: graphql.FieldConfigArgument{
+					"token": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"professordcordid": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"dcordserverid": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+				},
+				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+					returnPayload := MutationPayload{}
+					returnPayload.Success = true
+					returnPayload.Token = params.Args["token"].(string)
+					apiError := CreateClassroomDiscord(params, collectionClass)
+					if apiError.Error {
+						returnPayload.Success = false
+						returnPayload.Errors = append(returnPayload.Errors, apiError.Message)
+					}
+
+					return returnPayload, nil
+				},
+			},
+			"createclassroomfront": &graphql.Field{
+				Type:        MutPayloadType,
+				Description: "Create classroom front end",
+				Args: graphql.FieldConfigArgument{
+					"token": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"classname": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"classnumber": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"sectionnumber": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+				},
+				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+					returnPayload := MutationPayload{}
+					apiError := CreateClassroomFrontEnd(params, collectionClass)
+					returnPayload.Token = params.Args["token"].(string)
+					if apiError.Error {
+						returnPayload.Success = false
+						returnPayload.Errors = append(returnPayload.Errors, apiError.Message)
+					}
+					return returnPayload, nil
 				},
 			},
 		},
@@ -220,7 +316,7 @@ func main() {
 					},
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					returnVal, _ := UserExist(params.Args["email"].(string), collection)
+					returnVal, _ := UserExist(params.Args["email"].(string), collectionUser)
 
 					return returnVal, nil
 				},
@@ -243,7 +339,7 @@ func main() {
 						gocb.GetSpec("id", &gocb.GetSpecOptions{}),
 						gocb.GetSpec("token", &gocb.GetSpecOptions{}),
 					}
-					getResult, err := collection.LookupIn(params.Args["email"].(string), ops, &gocb.LookupInOptions{})
+					getResult, err := collectionUser.LookupIn(params.Args["email"].(string), ops, &gocb.LookupInOptions{})
 					if err != nil {
 
 						return false, nil
@@ -277,7 +373,7 @@ func main() {
 					},
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					returnVal, errorReturn := Login(params.Args["email"].(string), params.Args["password"].(string), params.Args["token"].(string), collection)
+					returnVal, errorReturn := Login(params.Args["email"].(string), params.Args["password"].(string), params.Args["token"].(string), collectionUser)
 					var errors []string
 					errors = append(errors, errorReturn.Message)
 					returnPayload := MutationPayload{
