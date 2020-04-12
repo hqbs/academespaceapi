@@ -133,4 +133,4 @@ createclassroomfront
       - *String array of all errors*
     - token
       - Type: String
-      - *Returns a valid token only when success is true*
+      - *Returns a valid token only when success is true* 
