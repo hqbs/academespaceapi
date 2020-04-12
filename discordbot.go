@@ -17,7 +17,7 @@ func DiscordTokenGen(email string, collectionUser *gocb.Collection) (DiscordConn
 		Error:   false,
 		Message: "",
 	}
-	getEnv()
+
 	jwtSecret := fmt.Sprintf("%s%s", os.Getenv("JWT_SECRET"), os.Getenv("DISCORD_JWT_SECRET"))
 	expirationTime := time.Now().Add(30 * time.Minute)
 	classroomID, err := bcrypt.GenerateFromPassword([]byte(email), 4)
@@ -65,7 +65,7 @@ func DiscordValidateToken(tokenString string) (bool, string, string) {
 	// Returns bool if correct and the prof email
 	email := ""
 	claims := &DiscordClaims{}
-	getEnv()
+
 	jwtSecret := fmt.Sprintf("%s%s", os.Getenv("JWT_SECRET"), os.Getenv("DISCORD_JWT_SECRET"))
 	// Parse the JWT string and store the result in `claims`.
 	// Note that we are passing the key in this method as well. This method will return an error
