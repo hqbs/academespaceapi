@@ -125,12 +125,12 @@ createclassroomfront
     - sectionnumber
       - Type: String
   - Return
-   - success
-     - Type: Boolean
-     - *Denotes any errors - false == errors*
-   - errors
-     - Type: []String
-     - *String array of all errors*
-   - token
-     - Type: String
-     - *Returns a valid token only when success is true*
+    - success
+      - Type: Boolean
+      - *Denotes any errors - false == errors*
+    - errors
+      - Type: []String
+      - *String array of all errors*
+    - token
+      - Type: String
+      - *Returns a valid token only when success is true*
