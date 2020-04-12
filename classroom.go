@@ -105,42 +105,43 @@ func GetClassrooms(email string, collectionUser *gocb.Collection, collectionClas
 
 		//TODO: Handle (err)
 	}
+	if len(userClasses) > 1 {
+		for i := 1; i < len(userClasses); i++ {
 
-	for i := 0; i < len(userClasses); i++ {
+			ops := []gocb.LookupInSpec{
+				gocb.GetSpec("classname", &gocb.GetSpecOptions{}),
+				gocb.GetSpec("classnumber", &gocb.GetSpecOptions{}),
+				gocb.GetSpec("sectionnumber", &gocb.GetSpecOptions{}),
+				gocb.GetSpec("dcordserverid", &gocb.GetSpecOptions{}),
+			}
+			getResult, err := collectionClass.LookupIn(userClasses[i], ops, &gocb.LookupInOptions{})
 
-		ops := []gocb.LookupInSpec{
-			gocb.GetSpec("classname", &gocb.GetSpecOptions{}),
-			gocb.GetSpec("classnumber", &gocb.GetSpecOptions{}),
-			gocb.GetSpec("sectionnumber", &gocb.GetSpecOptions{}),
-			gocb.GetSpec("dcordserverid", &gocb.GetSpecOptions{}),
+			if err != nil {
+
+				//TODO: Handle (err)
+			}
+
+			tempClassroom := Classroom{}
+			err = getResult.ContentAt(0, &tempClassroom.ClassName)
+			if err != nil {
+				//TODO: Handle (err)
+			}
+			err = getResult.ContentAt(1, &tempClassroom.ClassNumber)
+			if err != nil {
+				//TODO: Handle (err)
+			}
+			err = getResult.ContentAt(2, &tempClassroom.SectionNumber)
+			if err != nil {
+				//TODO: Handle (err)
+			}
+			err = getResult.ContentAt(3, &tempClassroom.DCordServerID)
+			if err != nil {
+				//TODO: Handle (err)
+			}
+
+			userClassroomsInfo = append(userClassroomsInfo, tempClassroom)
+
 		}
-		getResult, err := collectionClass.LookupIn(userClasses[i], ops, &gocb.LookupInOptions{})
-
-		if err != nil {
-
-			//TODO: Handle (err)
-		}
-
-		tempClassroom := Classroom{}
-		err = getResult.ContentAt(0, &tempClassroom.ClassName)
-		if err != nil {
-			//TODO: Handle (err)
-		}
-		err = getResult.ContentAt(1, &tempClassroom.ClassNumber)
-		if err != nil {
-			//TODO: Handle (err)
-		}
-		err = getResult.ContentAt(2, &tempClassroom.SectionNumber)
-		if err != nil {
-			//TODO: Handle (err)
-		}
-		err = getResult.ContentAt(3, &tempClassroom.DCordServerID)
-		if err != nil {
-			//TODO: Handle (err)
-		}
-
-		userClassroomsInfo = append(userClassroomsInfo, tempClassroom)
-
 	}
 
 	//TODO: Return array of class info
