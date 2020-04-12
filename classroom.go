@@ -70,10 +70,7 @@ func CreateClassroomFrontEnd(params graphql.ResolveParams, collectionClass *gocb
 			//TODO: handle
 		}
 		mops = []gocb.MutateInSpec{
-			gocb.ArrayAppendSpec("classrooms", classID, &gocb.ArrayAppendSpecOptions{
-				HasMultiple: true,
-				CreatePath:  true,
-			}),
+			gocb.ArrayAppendSpec("classrooms", classID, &gocb.ArrayAppendSpecOptions{}),
 		}
 		_, err = collectionUser.MutateIn(email, mops, &gocb.MutateInOptions{})
 
