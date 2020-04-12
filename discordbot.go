@@ -7,10 +7,11 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/couchbase/gocb"
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-func DiscordTokenGen(email string) (DiscordConnectToken, APIError) {
+func DiscordTokenGen(email string, collectionUser *gocb.Collection) (DiscordConnectToken, APIError) {
 	newToken := DiscordConnectToken{}
 	newError := APIError{
 		Error:   false,
@@ -42,6 +43,17 @@ func DiscordTokenGen(email string) (DiscordConnectToken, APIError) {
 	}
 	newToken.Token = tokenString
 	newToken.ExpireDate = expirationTime.Unix()
+	mops := []gocb.MutateInSpec{
+		gocb.UpsertSpec("connectiontoken.token", newToken.Token, &gocb.UpsertSpecOptions{}),
+		gocb.UpsertSpec("connectiontoken.expiredate", newToken.ExpireDate, &gocb.UpsertSpecOptions{}),
+	}
+	_, err = collectionUser.MutateIn(email, mops, &gocb.MutateInOptions{
+		Timeout: 50 * time.Millisecond,
+	})
+	if err != nil {
+		newError.Error = true
+		newError.Message = "Validation Error, please try again later. Dev Code: JWTERRUPD"
+	}
 
 	return newToken, newError
 

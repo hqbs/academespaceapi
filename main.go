@@ -10,6 +10,7 @@ import (
 	"github.com/couchbase/gocb"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/graphql-go/graphql"
+	"github.com/joho/godotenv"
 )
 
 /* API Structs */
@@ -143,11 +144,11 @@ type TA struct {
 /* Classroom Structs End */
 
 func main() {
-	// err := godotenv.Load()
-	// if err != nil {
-	// 	fmt.Println("error loading env file")
-	// 	//log.Fatal(err)
-	// }
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("error loading env file")
+		//log.Fatal(err)
+	}
 	var (
 		dbUser        = os.Getenv("COUCH_USER")
 		dbPass        = os.Getenv("COUCH_PASS")
@@ -168,7 +169,7 @@ func main() {
 	if err != nil {
 		//TODO: Handle error - will need to be sent through API
 		//TODO: Most likely a struct with a payload setup of some sort
-		//log.Fatal(err)
+		log.Fatal(err)
 	}
 	bucket := cluster.Bucket(dbBucket)
 	collectionUser := bucket.DefaultCollection()
@@ -198,7 +199,7 @@ func main() {
 		Fields: graphql.Fields{
 			"createUser": &graphql.Field{
 				Type:        MutPayloadType,
-				Description: "Update existing todo, mark it done or not done",
+				Description: "Create a user!",
 				Args: graphql.FieldConfigArgument{
 					"fname": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),

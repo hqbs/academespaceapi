@@ -87,6 +87,7 @@ func ValidateInfo(params graphql.ResolveParams) ValidatedUser {
 
 func NewUser(userInfo ValidatedUser, collection *gocb.Collection) (UserToken, MutationPayload) {
 	returnErr := MutationPayload{}
+	returnErr.Success = true
 	returnToken := userInfo.ValidUser.Token
 	if userInfo.UserValid {
 		exists, _ := UserExist(userInfo.ValidUser.Email, collection)
