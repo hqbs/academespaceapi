@@ -243,7 +243,7 @@ func main() {
 			"classnumber": &graphql.Field{
 				Type: graphql.String,
 			},
-			"sectionumber": &graphql.Field{
+			"sectionnumber": &graphql.Field{
 				Type: graphql.String,
 			},
 			"professordcordid": &graphql.Field{
@@ -471,7 +471,7 @@ func main() {
 			},
 			"getuserclassrooms": &graphql.Field{
 				Type:        graphql.NewList(ClassroomType),
-				Description: "Login!",
+				Description: "get classrooms",
 				Args: graphql.FieldConfigArgument{
 					"email": &graphql.ArgumentConfig{
 						Type: graphql.NewNonNull(graphql.String),
