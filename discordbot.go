@@ -1,10 +1,11 @@
 package main
 
 import (
-	"bcrypt"
 	"fmt"
 	"os"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 
 	jwt "github.com/dgrijalva/jwt-go"
 )
