@@ -33,10 +33,10 @@ func CreateClassroomDiscord(params graphql.ResolveParams, collectionClass *gocb.
 
 }
 
-func CreateClassroomFrontEnd(params graphql.ResolveParams, collectionClass *gocb.Collection) APIError {
+func CreateClassroomFrontEnd(params graphql.ResolveParams, collectionClass *gocb.Collection, collectionUser *gocb.Collection) APIError {
 	newClassroom := Classroom{}
 	returnError := APIError{}
-	valid, _, classID := DiscordValidateToken(params.Args["token"].(string))
+	valid, email, classID := DiscordValidateToken(params.Args["token"].(string))
 	if valid {
 		// Search by the classID
 		// Verify email
@@ -57,6 +57,90 @@ func CreateClassroomFrontEnd(params graphql.ResolveParams, collectionClass *gocb
 		if err != nil {
 			//TODO: API error mutate error
 		}
+		mops = []gocb.MutateInSpec{
+			gocb.ArrayAppendSpec("classrooms", classID, nil),
+		}
+		_, err = collectionUser.MutateIn(email, mops, &gocb.MutateInOptions{})
+
+		if err != nil {
+			//TODO: API error mutate error
+		}
 	}
 	return returnError
+}
+
+func GetClassrooms(email string, collectionUser *gocb.Collection, collectionClass *gocb.Collection) ([]Classroom, APIError) {
+	var userClasses []string
+	var userClassroomsInfo []Classroom
+	returnErr := APIError{}
+	ops := []gocb.LookupInSpec{
+		gocb.GetSpec("classrooms", &gocb.GetSpecOptions{}),
+	}
+	getResult, err := collectionUser.LookupIn(email, ops, &gocb.LookupInOptions{})
+	if err != nil {
+
+		//TODO: Recall error
+	}
+
+	err = getResult.ContentAt(0, &userClasses)
+	if err != nil {
+
+		//TODO: Get classes error
+	}
+
+	for i := 0; i < len(userClasses); i++ {
+		ops := []gocb.LookupInSpec{
+			gocb.GetSpec("classname", &gocb.GetSpecOptions{}),
+			gocb.GetSpec("classnumber", &gocb.GetSpecOptions{}),
+			gocb.GetSpec("sectionnumber", &gocb.GetSpecOptions{}),
+			gocb.GetSpec("dcordserverid", &gocb.GetSpecOptions{}),
+			gocb.GetSpec("studentlist", &gocb.GetSpecOptions{}),
+			gocb.GetSpec("talist", &gocb.GetSpecOptions{}),
+		}
+		getResult, err := collectionClass.LookupIn(userClasses[i], ops, &gocb.LookupInOptions{})
+		if err != nil {
+			//TODO: Handle
+		}
+
+		tempClassroom := Classroom{}
+		err = getResult.ContentAt(0, &tempClassroom.ClassName)
+		if err != nil {
+			//TODO: Handle
+		}
+		err = getResult.ContentAt(1, &tempClassroom.ClassNumber)
+		if err != nil {
+			//TODO: Handle
+		}
+		err = getResult.ContentAt(2, &tempClassroom.SectionNumber)
+		if err != nil {
+			//TODO: Handle
+		}
+		err = getResult.ContentAt(3, &tempClassroom.DCordServerID)
+		if err != nil {
+			//TODO: Handle
+		}
+		err = getResult.ContentAt(4, &tempClassroom.StudentList)
+		if err != nil {
+			//TODO: Handle
+		}
+		err = getResult.ContentAt(5, &tempClassroom.TAList)
+		if err != nil {
+			//TODO: Handle
+		}
+
+		userClassroomsInfo = append(userClassroomsInfo, tempClassroom)
+
+	}
+
+	//TODO: Return array of class info
+	return userClassroomsInfo, returnErr
+
+}
+
+func AddStudents() {
+	//TODO: Implement
+}
+
+func AddTAs() {
+	//TODO: Implement
 }
