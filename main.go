@@ -238,7 +238,7 @@ func main() {
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 					returnPayload := MutationPayload{}
-					dcordToken, apiError := DiscordTokenGen(params.Args["email"].(string))
+					dcordToken, apiError := DiscordTokenGen(params.Args["email"].(string), collectionUser)
 					returnPayload.Token = dcordToken.Token
 					if apiError.Error {
 						returnPayload.Success = false
