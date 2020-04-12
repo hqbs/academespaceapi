@@ -27,7 +27,7 @@ func GenToken(email string, id string) (UserToken, APIError) {
 	}
 	// getEnv() For prod
 	jwtSecret := fmt.Sprintf("%s%s", os.Getenv("JWT_SECRET"), id)
-	expirationTime := time.Now().Add(10 * time.Minute)
+	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := Claims{
 		Email: email,
 		StandardClaims: jwt.StandardClaims{
