@@ -97,19 +97,45 @@ func GetClassrooms(email string, collectionUser *gocb.Collection, collectionClas
 	}
 
 	err = getResult.ContentAt(0, &userClasses)
+
 	if err != nil {
 
 		//TODO: Handle (err)
 	}
 
 	for i := 0; i < len(userClasses); i++ {
+		ops = []gocb.LookupInSpec{
+			gocb.ExistsSpec("studentlist", &gocb.ExistsSpecOptions{}),
+			gocb.ExistsSpec("talist", &gocb.ExistsSpecOptions{}),
+		}
+		existsResult, err := collectionClass.LookupIn(userClasses[i], ops, &gocb.LookupInOptions{})
+		if err != nil {
+			panic(err)
+		}
+
+		var studentListExist bool
+		var taListExist bool
+		err = existsResult.ContentAt(0, &studentListExist)
+		if err != nil {
+			panic(err)
+		}
+		err = existsResult.ContentAt(1, &taListExist)
+		if err != nil {
+			panic(err)
+		}
+
 		ops := []gocb.LookupInSpec{
 			gocb.GetSpec("classname", &gocb.GetSpecOptions{}),
 			gocb.GetSpec("classnumber", &gocb.GetSpecOptions{}),
 			gocb.GetSpec("sectionnumber", &gocb.GetSpecOptions{}),
 			gocb.GetSpec("dcordserverid", &gocb.GetSpecOptions{}),
-			gocb.GetSpec("studentlist", &gocb.GetSpecOptions{}),
-			gocb.GetSpec("talist", &gocb.GetSpecOptions{}),
+		}
+		if studentListExist {
+			ops = append(ops, gocb.GetSpec("studentlist", &gocb.GetSpecOptions{}))
+
+		}
+		if taListExist {
+			ops = append(ops, gocb.GetSpec("talist", &gocb.GetSpecOptions{}))
 		}
 		getResult, err := collectionClass.LookupIn(userClasses[i], ops, &gocb.LookupInOptions{})
 
@@ -135,13 +161,18 @@ func GetClassrooms(email string, collectionUser *gocb.Collection, collectionClas
 		if err != nil {
 			//TODO: Handle (err)
 		}
-		err = getResult.ContentAt(4, &tempClassroom.StudentList)
-		if err != nil {
-			//TODO: Handle (err)
+		if studentListExist {
+			err = getResult.ContentAt(4, &tempClassroom.StudentList)
+			if err != nil {
+				//TODO: Handle (err)
+			}
 		}
-		err = getResult.ContentAt(5, &tempClassroom.TAList)
-		if err != nil {
-			//TODO: Handle (err)
+
+		if taListExist {
+			err = getResult.ContentAt(5, &tempClassroom.TAList)
+			if err != nil {
+				//TODO: Handle (err)
+			}
 		}
 
 		userClassroomsInfo = append(userClassroomsInfo, tempClassroom)
