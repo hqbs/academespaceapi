@@ -26,7 +26,7 @@ func DiscordTokenGen(email string) (DiscordConnectToken, APIError) {
 	}
 	claims := DiscordClaims{
 		Email:       email,
-		ClassroomID: classroomID,
+		ClassroomID: string(classroomID),
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},
