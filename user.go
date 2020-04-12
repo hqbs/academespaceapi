@@ -64,6 +64,7 @@ func ValidateInfo(params graphql.ResolveParams) ValidatedUser {
 	}
 
 	var classes []string
+	classes = append(classes, "")
 
 	returnUser := ValidatedUser{
 		ValidUser: User{
