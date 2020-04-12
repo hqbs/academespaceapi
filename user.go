@@ -63,6 +63,8 @@ func ValidateInfo(params graphql.ResolveParams) ValidatedUser {
 		//TODO: handle
 	}
 
+	var classes []string
+
 	returnUser := ValidatedUser{
 		ValidUser: User{
 			FName:       params.Args["fname"].(string),
@@ -72,6 +74,7 @@ func ValidateInfo(params graphql.ResolveParams) ValidatedUser {
 			Type:        params.Args["type"].(string),
 			ID:          string(idHash),
 			Password:    string(passHash),
+			Classrooms:  classes,
 		},
 
 		UserValid: userValid,
