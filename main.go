@@ -81,7 +81,7 @@ type User struct {
 	DiscordID       string              `json:"discordid,omitempty"`
 	Token           UserToken           `json:"token,omitempty"`
 	PassReset       UserPassReset       `json:"passreset,omitempty"`
-	Classrooms      []UserClassroom     `json:"classrooms,omitempty"`
+	Classrooms      []string            `json:"classrooms"`
 	ConnectionToken DiscordConnectToken `json:"connectiontoken,omitempty"`
 }
 
@@ -107,15 +107,11 @@ type ModifyUser struct {
 
 type Classroom struct {
 	CRID              string    `json:"crid"`
-	University        string    `json:"university,omitempty"`
-	Professor         string    `json:"professor,omitempty"`
 	ProfessorEmail    string    `json:"professoremail"`
 	ClassName         string    `json:"classname,omitempty"`
 	ClassNumber       string    `json:"classnumber,omitempty"`
 	SectionNumber     string    `json:"sectionnumber,omitempty"`
 	ProfessorDCordID  string    `json:"professordcordid"`
-	AllEmails         bool      `json:"allemails,omitempty"`
-	ApprovedEmails    []string  `json"approvedemails,omitempty"`
 	JoinCodeServer    string    `json:"joincodeserver,omitempty"`
 	StudentList       []Student `json:"studentlist,omitempty"`
 	TAList            []TA      `json:"talist,omitempty"`
@@ -186,6 +182,90 @@ func main() {
 			},
 			"token": &graphql.Field{
 				Type: graphql.String,
+			},
+		},
+	})
+
+	StudentType := graphql.NewObject(graphql.ObjectConfig{
+		Name: "student",
+		Fields: graphql.Fields{
+			"studentemail": &graphql.Field{
+				Type: graphql.String,
+			},
+			"studentname": &graphql.Field{
+				Type: graphql.String,
+			},
+			"joincode": &graphql.Field{
+				Type: graphql.String,
+			},
+			"dcordid": &graphql.Field{
+				Type: graphql.String,
+			},
+			"dcordnick": &graphql.Field{
+				Type: graphql.String,
+			},
+		},
+	})
+
+	TAType := graphql.NewObject(graphql.ObjectConfig{
+		Name: "ta",
+		Fields: graphql.Fields{
+			"taemail": &graphql.Field{
+				Type: graphql.String,
+			},
+			"taname": &graphql.Field{
+				Type: graphql.String,
+			},
+			"joincode": &graphql.Field{
+				Type: graphql.String,
+			},
+			"dcordid": &graphql.Field{
+				Type: graphql.String,
+			},
+			"dcordnick": &graphql.Field{
+				Type: graphql.String,
+			},
+		},
+	})
+
+	ClassroomType := graphql.NewObject(graphql.ObjectConfig{
+		Name: "classroom",
+		Fields: graphql.Fields{
+			"crid": &graphql.Field{
+				Type: graphql.String,
+			},
+			"professoremail": &graphql.Field{
+				Type: graphql.String,
+			},
+			"classname": &graphql.Field{
+				Type: graphql.String,
+			},
+			"classnumber": &graphql.Field{
+				Type: graphql.String,
+			},
+			"sectionumber": &graphql.Field{
+				Type: graphql.String,
+			},
+			"professordcordid": &graphql.Field{
+				Type: graphql.String,
+			},
+			"joincodeserver": &graphql.Field{
+				Type: graphql.String,
+			},
+			"dcordserverid": &graphql.Field{
+				Type: graphql.String,
+			},
+			"studentlist": &graphql.Field{
+				Type: graphql.NewList(StudentType),
+			},
+			"talist": &graphql.Field{
+				Type: graphql.NewList(TAType),
+			},
+			"dcordconnected": &graphql.Field{
+				Type: graphql.Boolean,
+			},
+			"frontendconnected": &graphql.Field{
+				Type: graphql.Boolean,
 			},
 		},
 	})
@@ -292,7 +372,7 @@ func main() {
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 					returnPayload := MutationPayload{}
-					apiError := CreateClassroomFrontEnd(params, collectionClass)
+					apiError := CreateClassroomFrontEnd(params, collectionClass, collectionUser)
 					returnPayload.Token = params.Args["token"].(string)
 					if apiError.Error {
 						returnPayload.Success = false
@@ -387,6 +467,49 @@ func main() {
 						returnPayload.Success = true
 					}
 					return returnPayload, nil
+				},
+			},
+			"getuserclassrooms": &graphql.Field{
+				Type:        graphql.NewList(ClassroomType),
+				Description: "Login!",
+				Args: graphql.FieldConfigArgument{
+					"email": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"token": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+				},
+				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+					var id string
+					var userToken UserToken
+					var valid bool
+					var returnClasses []Classroom
+					ops := []gocb.LookupInSpec{
+						gocb.GetSpec("id", &gocb.GetSpecOptions{}),
+						gocb.GetSpec("token", &gocb.GetSpecOptions{}),
+					}
+					getResult, err := collectionUser.LookupIn(params.Args["email"].(string), ops, &gocb.LookupInOptions{})
+					if err != nil {
+
+						valid = false
+					}
+
+					err = getResult.ContentAt(0, &id)
+					if err != nil {
+
+						valid = false
+					}
+					err = getResult.ContentAt(1, &userToken)
+					if err != nil {
+
+						valid = false
+					}
+					valid = ValidateToken(params.Args["token"].(string), userToken, id)
+					if valid {
+						returnClasses, _ = GetClassrooms(params.Args["email"].(string), collectionUser, collectionClass)
+					}
+					return returnClasses, nil
 				},
 			},
 		},
