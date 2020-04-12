@@ -1,7 +1,7 @@
 package main
 
 import (
-	"time"
+	"log"
 
 	"github.com/couchbase/gocb"
 	"github.com/graphql-go/graphql"
@@ -25,9 +25,11 @@ func CreateClassroomDiscord(params graphql.ResolveParams, collectionClass *gocb.
 	} else {
 		//TODO: Return token error
 	}
-	_, err := collectionClass.Upsert(classID, newClassroom, &gocb.UpsertOptions{})
+	result, err := collectionClass.Upsert(classID, newClassroom, &gocb.UpsertOptions{})
+	log.Println(result)
 	if err != nil {
-		//TODO: Return db upsert error
+
+		//TODO: Handle (err)
 	}
 	return returnError
 
@@ -36,6 +38,7 @@ func CreateClassroomDiscord(params graphql.ResolveParams, collectionClass *gocb.
 func CreateClassroomFrontEnd(params graphql.ResolveParams, collectionClass *gocb.Collection, collectionUser *gocb.Collection) APIError {
 	newClassroom := Classroom{}
 	returnError := APIError{}
+
 	valid, email, classID := DiscordValidateToken(params.Args["token"].(string))
 	if valid {
 		// Search by the classID
@@ -47,23 +50,33 @@ func CreateClassroomFrontEnd(params graphql.ResolveParams, collectionClass *gocb
 			SectionNumber: params.Args["sectionnumber"].(string),
 		}
 		mops := []gocb.MutateInSpec{
-			gocb.UpsertSpec("classname", newClassroom.ClassName, &gocb.UpsertSpecOptions{}),
-			gocb.UpsertSpec("classnumber", newClassroom.ClassNumber, &gocb.UpsertSpecOptions{}),
-			gocb.UpsertSpec("sectionnumber", newClassroom.SectionNumber, &gocb.UpsertSpecOptions{}),
+			gocb.UpsertSpec("classname", newClassroom.ClassName, &gocb.UpsertSpecOptions{
+				CreatePath: true,
+			}),
+			gocb.UpsertSpec("classnumber", newClassroom.ClassNumber, &gocb.UpsertSpecOptions{
+				CreatePath: true,
+			}),
+			gocb.UpsertSpec("sectionnumber", newClassroom.SectionNumber, &gocb.UpsertSpecOptions{
+				CreatePath: true,
+			}),
 		}
-		_, err := collectionClass.MutateIn(classID, mops, &gocb.MutateInOptions{
-			Timeout: 50 * time.Millisecond,
-		})
-		if err != nil {
-			//TODO: API error mutate error
-		}
-		mops = []gocb.MutateInSpec{
-			gocb.ArrayAppendSpec("classrooms", classID, nil),
-		}
-		_, err = collectionUser.MutateIn(email, mops, &gocb.MutateInOptions{})
+		result, err := collectionClass.MutateIn(classID, mops, &gocb.MutateInOptions{})
 
 		if err != nil {
-			//TODO: API error mutate error
+
+			//TODO: Handle (err)
+		}
+		mops = []gocb.MutateInSpec{
+			gocb.ArrayAppendSpec("classrooms", classID, &gocb.ArrayAppendSpecOptions{
+				HasMultiple: true,
+				CreatePath:  true,
+			}),
+		}
+		result, err = collectionUser.MutateIn(email, mops, &gocb.MutateInOptions{})
+		log.Println(result)
+		if err != nil {
+
+			//TODO: Handle (err)
 		}
 	}
 	return returnError
@@ -77,15 +90,16 @@ func GetClassrooms(email string, collectionUser *gocb.Collection, collectionClas
 		gocb.GetSpec("classrooms", &gocb.GetSpecOptions{}),
 	}
 	getResult, err := collectionUser.LookupIn(email, ops, &gocb.LookupInOptions{})
+
 	if err != nil {
 
-		//TODO: Recall error
+		//TODO: Handle (err)
 	}
 
 	err = getResult.ContentAt(0, &userClasses)
 	if err != nil {
 
-		//TODO: Get classes error
+		//TODO: Handle (err)
 	}
 
 	for i := 0; i < len(userClasses); i++ {
@@ -98,34 +112,36 @@ func GetClassrooms(email string, collectionUser *gocb.Collection, collectionClas
 			gocb.GetSpec("talist", &gocb.GetSpecOptions{}),
 		}
 		getResult, err := collectionClass.LookupIn(userClasses[i], ops, &gocb.LookupInOptions{})
+
 		if err != nil {
-			//TODO: Handle
+
+			//TODO: Handle (err)
 		}
 
 		tempClassroom := Classroom{}
 		err = getResult.ContentAt(0, &tempClassroom.ClassName)
 		if err != nil {
-			//TODO: Handle
+			//TODO: Handle (err)
 		}
 		err = getResult.ContentAt(1, &tempClassroom.ClassNumber)
 		if err != nil {
-			//TODO: Handle
+			//TODO: Handle (err)
 		}
 		err = getResult.ContentAt(2, &tempClassroom.SectionNumber)
 		if err != nil {
-			//TODO: Handle
+			//TODO: Handle (err)
 		}
 		err = getResult.ContentAt(3, &tempClassroom.DCordServerID)
 		if err != nil {
-			//TODO: Handle
+			//TODO: Handle (err)
 		}
 		err = getResult.ContentAt(4, &tempClassroom.StudentList)
 		if err != nil {
-			//TODO: Handle
+			//TODO: Handle (err)
 		}
 		err = getResult.ContentAt(5, &tempClassroom.TAList)
 		if err != nil {
-			//TODO: Handle
+			//TODO: Handle (err)
 		}
 
 		userClassroomsInfo = append(userClassroomsInfo, tempClassroom)
