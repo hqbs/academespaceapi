@@ -7,17 +7,7 @@ import (
 
 	"github.com/couchbase/gocb"
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/joho/godotenv"
 )
-
-func getEnv() {
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Println("error loading env file")
-		//log.Fatal(err)
-	}
-
-}
 
 func GenToken(email string, id string) (UserToken, APIError) {
 	newToken := UserToken{}
