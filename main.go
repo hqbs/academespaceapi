@@ -81,7 +81,7 @@ type User struct {
 	DiscordID       string              `json:"discordid,omitempty"`
 	Token           UserToken           `json:"token,omitempty"`
 	PassReset       UserPassReset       `json:"passreset,omitempty"`
-	Classrooms      []string            `json:"classrooms,omitempty"`
+	Classrooms      []string            `json:"classrooms"`
 	ConnectionToken DiscordConnectToken `json:"connectiontoken,omitempty"`
 }
 
